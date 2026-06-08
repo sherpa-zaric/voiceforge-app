@@ -1,5 +1,7 @@
 import '@/config/style/global.css';
 
+import { Analytics } from '@vercel/analytics/next';
+
 import { JetBrains_Mono, Merriweather, Noto_Sans_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
@@ -168,6 +170,7 @@ export default async function LocaleLayout({
         {analyticsBodyScripts}
         {affiliateBodyScripts}
         {customerServiceBodyScripts}
+        <Analytics />
       </body>
     </html>
   );
