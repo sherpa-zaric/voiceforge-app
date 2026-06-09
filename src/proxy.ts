@@ -9,6 +9,32 @@ const intlMiddleware = createIntlMiddleware(routing);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // --- Site password protection ---
+  const sitePassword = process.env.SITE_PASSWORD || '';
+  if (sitePassword) {
+    const isApi = pathname.startsWith('/api/');
+    const isStatic =
+      pathname.startsWith('/_next/') || pathname.startsWith('/voices/');
+    const isLoginPage =
+      pathname === '/site-login' || pathname === '/en/site-login';
+    const isSiteAuth =
+      request.method === 'POST' && pathname === '/api/site-auth';
+
+    if (!isApi && !isStatic && !isLoginPage && !isSiteAuth) {
+      const authCookie = request.cookies.get('site_auth')?.value;
+      if (authCookie !== sitePassword) {
+        const locale = pathname.split('/')[1];
+        const isValidLocale = routing.locales.includes(locale as any);
+        const loginUrl = new URL(
+          isValidLocale ? `/${locale}/site-login` : '/en/site-login',
+          request.url
+        );
+        loginUrl.searchParams.set('from', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+  }
+
   // Handle internationalization first
   const intlResponse = intlMiddleware(request);
 
