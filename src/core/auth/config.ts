@@ -65,9 +65,8 @@ const authOptions = {
     enabled: true,
   },
   logger: {
-    verboseLogging: false,
-    // Disable all logs during build and production
-    disabled: true,
+    verboseLogging: true,
+    disabled: false,
   },
 };
 
