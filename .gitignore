@@ -66,3 +66,6 @@ src/config/db/migrations*
 data/
 .env.local
 .env.development
+
+# Local agent config
+AGENTS.local.md

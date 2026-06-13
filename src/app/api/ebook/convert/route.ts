@@ -64,13 +64,19 @@ export async function POST(request: NextRequest) {
 
     await consumeCredits({
       userId: user.id,
+      userEmail: user.email,
       credits: creditsNeeded,
       scene: 'ebook_convert',
       description: `Ebook chapter: ${charCount} chars, voice: ${voice || 'Mia'}`,
     });
 
     return respData({ audio: merged });
-  } catch (err) {
+  } catch (err: any) {
+    // Handle content filter rejection
+    if (err.message === 'CONTENT_FILTERED') {
+      return respErr('Content moderation failed. Please modify your text and try again.');
+    }
+
     return respErr(`Request failed: ${err}`);
   }
 }

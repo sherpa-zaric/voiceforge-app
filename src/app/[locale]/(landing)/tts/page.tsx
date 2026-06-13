@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  useCallback,
+  useCallback, useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -259,7 +259,74 @@ function PresetTab() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const pollTaskStatus = useCallback(async (id: string) => {
+    try {
+      const res = await fetch('/api/tts/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: id }),
+      });
+      const data = await res.json();
+      
+      if (data.code !== 0) {
+        throw new Error(data.message || 'Failed to query task');
+      }
+
+      const task = data.data;
+      setProgress(task.progress);
+
+      if (task.status === 'success') {
+        // Task completed
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        if (task.audio) {
+          setAudioSrc(`data:audio/wav;base64,${task.audio}`);
+        }
+        setStatus('success');
+        setTaskId(null);
+      } else if (task.status === 'failed') {
+        // Task failed
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        setError('Task failed');
+        setStatus('error');
+        setTaskId(null);
+      } else if (task.status === 'paused') {
+        // Task paused, trigger continue
+        const continueRes = await fetch('/api/tts/continue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: id }),
+        });
+        const continueData = await continueRes.json();
+        if (continueData.code !== 0) {
+          throw new Error(continueData.message || 'Failed to continue task');
+        }
+        setProgress(continueData.data.progress);
+      }
+    } catch (err) {
+      console.error('Poll task failed:', err);
+      // Don't stop polling on transient errors
+    }
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!text.trim()) return;
@@ -270,6 +337,7 @@ function PresetTab() {
     setStatus('loading');
     setError(null);
     setAudioSrc(null);
+    setProgress({ current: 0, total: 0 });
 
     try {
       const res = await fetch('/api/tts', {
@@ -282,14 +350,44 @@ function PresetTab() {
         }),
       });
       const data = await res.json();
-      if (data.code !== 0) throw new Error(data.message || 'Generation failed');
-      setAudioSrc(`data:audio/wav;base64,${data.data.audio}`);
-      setStatus('success');
+      
+      if (data.code !== 0) {
+        throw new Error(data.message || 'Generation failed');
+      }
+
+      const task = data.data;
+      setTaskId(task.taskId);
+      setProgress(task.progress);
+
+      if (task.status === 'success') {
+        // Short text completed immediately
+        if (task.audio) {
+          setAudioSrc(`data:audio/wav;base64,${task.audio}`);
+        }
+        setStatus('success');
+        setTaskId(null);
+      } else if (task.status === 'processing' || task.status === 'paused') {
+        // Start polling
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+        }
+        pollIntervalRef.current = setInterval(() => {
+          pollTaskStatus(task.taskId);
+        }, 2000);
+      } else {
+        throw new Error(`Unexpected task status: ${task.status}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('error');
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
     }
-  }, [text, voice, style, user, setIsShowSignModal]);
+  }, [text, voice, style, user, setIsShowSignModal, pollTaskStatus]);
+
+  const isProcessing = status === 'loading' || taskId !== null;
 
   return (
     <div className="space-y-5">
@@ -384,17 +482,56 @@ function PresetTab() {
 
       <button
         onClick={handleGenerate}
-        disabled={status === 'loading' || !text.trim()}
+        disabled={isProcessing || !text.trim()}
         className="bg-primary text-primary-foreground hover:bg-primary/90 w-full cursor-pointer rounded-lg py-3 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {status === 'loading' ? 'Generating...' : 'Generate Speech'}
+        {isProcessing ? 'Generating...' : 'Generate Speech'}
       </button>
+
+      {/* Progress indicator */}
+      {isProcessing && progress.total > 0 && (
+        <div className="space-y-2">
+          <div className="text-primary flex items-center gap-2">
+            <svg
+              className="h-5 w-5 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            <span className="text-sm">
+              Generating audio... ({progress.current}/{progress.total} chunks)
+            </span>
+          </div>
+          <div className="bg-card h-2 w-full rounded-full">
+            <div
+              className="bg-primary h-2 rounded-full transition-all"
+              style={{
+                width: `${(progress.current / progress.total) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <StatusMessage status={status} error={error} />
       {audioSrc && <AudioPlayer src={audioSrc} />}
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Voice Design Tab
@@ -1292,10 +1429,10 @@ export default function TTSPage() {
           </TabButton>
         </div>
 
-        {tab === 'preset' && <PresetTab />}
-        {tab === 'design' && <DesignTab />}
-        {tab === 'clone' && <CloneTab />}
-        {tab === 'ebook' && <EbookTab />}
+        <div className={tab === 'preset' ? '' : 'hidden'}><PresetTab /></div>
+        <div className={tab === 'design' ? '' : 'hidden'}><DesignTab /></div>
+        <div className={tab === 'clone' ? '' : 'hidden'}><CloneTab /></div>
+        <div className={tab === 'ebook' ? '' : 'hidden'}><EbookTab /></div>
       </main>
     </div>
   );

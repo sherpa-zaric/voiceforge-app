@@ -1,13 +1,17 @@
 import { NextRequest } from 'next/server';
 
 import { respData, respErr } from '@/shared/lib/resp';
+import { getUuid } from '@/shared/lib/hash';
 import { callVoiceDesign, mergeWavBase64, splitText } from '@/shared/lib/tts';
 import { consumeCredits, getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
+import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 
 const CREDITS_PER_CHAR = 2;
 
 export async function POST(request: NextRequest) {
+  let taskId: string | undefined;
+
   try {
     const { text, voiceDescription, style } = await request.json();
 
@@ -42,6 +46,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create AI task record
+    taskId = getUuid();
+    await createAITask({
+      id: taskId,
+      userId: user.id,
+      mediaType: 'audio',
+      provider: 'mimo',
+      model: 'mimo-v2.5-tts-voicedesign',
+      prompt: text,
+      options: JSON.stringify({ voiceDescription, style }),
+      status: 'processing',
+      costCredits: creditsNeeded,
+      scene: 'voice_design',
+    });
+
     const chunks = splitText(text).filter((c) => c.length > 0);
     const audioChunks: string[] = [];
     for (const chunk of chunks) {
@@ -56,15 +75,43 @@ export async function POST(request: NextRequest) {
     }
     const merged = mergeWavBase64(audioChunks);
 
+    // Update task status to success
+    await updateAITaskById(taskId, {
+      status: 'success',
+      audioData: merged,
+      taskResult: JSON.stringify({}),
+    });
+
+    // Consume credits
     await consumeCredits({
       userId: user.id,
+      userEmail: user.email,
       credits: creditsNeeded,
       scene: 'voice_design',
       description: `Voice Design: ${charCount} chars`,
     });
 
     return respData({ audio: merged });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('Voice design failed:', err);
+
+    // Update task status to failed
+    if (taskId) {
+      try {
+        await updateAITaskById(taskId, {
+          status: 'failed',
+          taskInfo: JSON.stringify({ errorMessage: err.message }),
+        });
+      } catch (updateErr) {
+        console.error('Failed to update task status:', updateErr);
+      }
+    }
+
+    // Handle content filter rejection
+    if (err.message === 'CONTENT_FILTERED') {
+      return respErr('Content moderation failed. Please modify your text and try again.');
+    }
+
     return respErr(`Request failed: ${err}`);
   }
 }

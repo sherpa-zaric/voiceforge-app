@@ -108,6 +108,13 @@ export async function callTTS(
       `MiMo API error: ${data.error.message || JSON.stringify(data.error)}`
     );
   }
+
+  // Check for content filter rejection
+  const finishReason = data.choices?.[0]?.finish_reason;
+  if (finishReason === 'content_filter') {
+    throw new Error('CONTENT_FILTERED');
+  }
+
   const audio = data.choices?.[0]?.message?.audio?.data;
   if (!audio) {
     console.error(
@@ -143,6 +150,13 @@ export async function callVoiceDesign(
   });
   if (!res.ok) throw new Error(`MiMo API error: ${res.status}`);
   const data = await res.json();
+
+  // Check for content filter rejection
+  const finishReason = data.choices?.[0]?.finish_reason;
+  if (finishReason === 'content_filter') {
+    throw new Error('CONTENT_FILTERED');
+  }
+
   const audio = data.choices?.[0]?.message?.audio?.data;
   if (!audio) throw new Error('No audio data in response');
   return audio;
@@ -176,6 +190,13 @@ export async function callVoiceClone(
   });
   if (!res.ok) throw new Error(`MiMo API error: ${res.status}`);
   const data = await res.json();
+
+  // Check for content filter rejection
+  const finishReason = data.choices?.[0]?.finish_reason;
+  if (finishReason === 'content_filter') {
+    throw new Error('CONTENT_FILTERED');
+  }
+
   const audio = data.choices?.[0]?.message?.audio?.data;
   if (!audio) throw new Error('No audio data in response');
   return audio;

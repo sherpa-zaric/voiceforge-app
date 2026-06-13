@@ -144,6 +144,7 @@ export async function getCreditsCount({
 // consume credits
 export async function consumeCredits({
   userId,
+  userEmail,
   credits,
   scene,
   description,
@@ -151,6 +152,7 @@ export async function consumeCredits({
   tx,
 }: {
   userId: string;
+  userEmail?: string;
   credits: number; // credits to consume
   scene?: string;
   description?: string;
@@ -269,17 +271,21 @@ export async function consumeCredits({
     }
 
     // 3. create consumed credit
+    const now = new Date();
     const consumedCredit: NewCredit = {
       id: getUuid(),
       transactionNo: getSnowId(),
       transactionType: CreditTransactionType.CONSUME,
       transactionScene: scene,
       userId: userId,
+      userEmail: userEmail,
       status: CreditStatus.ACTIVE,
       description: description,
       credits: -credits,
       consumedDetail: JSON.stringify(consumedItems),
       metadata: metadata,
+      createdAt: now,
+      updatedAt: now,
     };
     await tx.insert(credit).values(consumedCredit);
 
@@ -375,6 +381,7 @@ export async function grantCreditsForUser({
 
   const creditDescription = description || 'grant credits';
 
+  const now = new Date();
   const newCredit: NewCredit = {
     id: getUuid(),
     userId: user.id,
@@ -389,6 +396,8 @@ export async function grantCreditsForUser({
     description: creditDescription,
     expiresAt: expiresAt,
     status: CreditStatus.ACTIVE,
+    createdAt: now,
+    updatedAt: now,
   };
 
   await createCredit(newCredit);

@@ -15,8 +15,14 @@ export type UpdateAITask = Partial<Omit<NewAITask, 'id' | 'createdAt'>>;
 
 export async function createAITask(newAITask: NewAITask) {
   const result = await db().transaction(async (tx: any) => {
-    // 1. create task record
-    const [taskResult] = await tx.insert(aiTask).values(newAITask).returning();
+    // 1. create task record (explicitly set timestamps for SQLite compatibility)
+    const now = new Date();
+    const taskData = {
+      ...newAITask,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const [taskResult] = await tx.insert(aiTask).values(taskData).returning();
 
     if (newAITask.costCredits && newAITask.costCredits > 0) {
       // 2. consume credits

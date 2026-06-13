@@ -300,7 +300,7 @@ export const subscription = table(
       table.interval
     ),
     // Composite: Prevent duplicate subscriptions
-    // Can also be used for: WHERE paymentProvider = ? (left-prefix)
+    // Can also be used for: WHERE subscriptionId = ? (left-prefix)
     index('idx_subscription_provider_id').on(
       table.subscriptionId,
       table.paymentProvider
@@ -496,6 +496,10 @@ export const aiTask = table(
     costCredits: integer('cost_credits').notNull().default(0),
     scene: text('scene').notNull().default(''),
     creditId: text('credit_id'), // credit consumption record id
+    // TTS background task fields
+    audioData: text('audio_data'), // completed audio base64 data
+    processedChunks: text('processed_chunks'), // processed chunks JSON array
+    totalChunks: integer('total_chunks').default(0), // total number of chunks
   },
   (table) => [
     // Composite: Query user's AI tasks by status

@@ -23,6 +23,7 @@ export function LazyImage({
   height?: number;
   placeholderSrc?: string;
   title?: string;
+  /** Note: fill, priority, sizes are accepted for API compatibility but not passed to LazyLoadImage */
   fill?: boolean;
   priority?: boolean;
   sizes?: string;
@@ -33,9 +34,10 @@ export function LazyImage({
       alt={alt}
       width={width}
       height={height}
-      effect="blur" // 支持 blur、opacity 等
-      placeholderSrc={placeholderSrc} // 可选
+      effect="blur"
+      placeholderSrc={placeholderSrc}
       className={className}
+      title={title}
     />
   );
 }
