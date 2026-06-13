@@ -8,6 +8,11 @@
         "icon": "User"
       },
       {
+        "title": "Security",
+        "url": "/settings/security",
+        "icon": "Shield"
+      },
+      {
         "title": "Billing",
         "url": "/settings/billing",
         "icon": "CreditCard"

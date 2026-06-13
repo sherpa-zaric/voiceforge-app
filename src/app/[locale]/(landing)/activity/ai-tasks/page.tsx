@@ -5,6 +5,15 @@ import { ContinueButton } from './continue-button';
 import { AITask, getAITasks, getAITasksCount } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 
+function safeJsonParse(str: string | null | undefined): any {
+  if (!str) return null;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return null;
+  }
+}
+
 // Status Badge Component
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -74,7 +83,7 @@ function TaskCard({ task }: { task: AITask }) {
       {task.status === 'failed' && task.taskInfo && (
         <div className="mb-3 rounded-md bg-red-50 p-3">
           <p className="text-red-600 text-xs">
-            {JSON.parse(task.taskInfo).errorMessage || 'Generation failed'}
+            {safeJsonParse(task.taskInfo)?.errorMessage || 'Generation failed'}
           </p>
         </div>
       )}
@@ -83,7 +92,7 @@ function TaskCard({ task }: { task: AITask }) {
       {task.mediaType === 'image' && task.taskInfo && (
         <div className="mb-3">
           {(() => {
-            const taskInfo = JSON.parse(task.taskInfo);
+            const taskInfo = safeJsonParse(task.taskInfo);
             if (taskInfo.images && taskInfo.images.length > 0) {
               return (
                 <div className="flex gap-2 overflow-x-auto">
@@ -107,7 +116,7 @@ function TaskCard({ task }: { task: AITask }) {
       {task.mediaType === 'music' && task.taskInfo && (
         <div className="mb-3">
           {(() => {
-            const taskInfo = JSON.parse(task.taskInfo);
+            const taskInfo = safeJsonParse(task.taskInfo);
             if (taskInfo.songs && taskInfo.songs.length > 0) {
               return (
                 <div className="space-y-2">

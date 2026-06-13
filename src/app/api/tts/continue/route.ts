@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.MIMO_API_KEY;
     const baseUrl =
-      process.env.MIMO_BASE_URL || 'https://api.xiaomimimo.com/v1';
+      process.env.MIMO_BASE_URL || 'https://token-plan-sgp.xiaomimimo.com/v1';
 
     if (!apiKey || apiKey === 'your_api_key_here') {
       return respErr('MIMO_API_KEY is not configured');

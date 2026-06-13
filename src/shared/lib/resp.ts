@@ -1,5 +1,5 @@
 export function respData(data: any) {
-  return respJson(0, 'ok', data || []);
+  return respJson(0, 'ok', data);
 }
 
 export function respOk() {
@@ -11,13 +11,13 @@ export function respErr(message: string) {
 }
 
 export function respJson(code: number, message: string, data?: any) {
-  let json = {
-    code: code,
-    message: message,
-    data: data,
+  const json: any = {
+    code,
+    message,
   };
-  if (data) {
-    json['data'] = data;
+
+  if (data !== undefined) {
+    json.data = data;
   }
 
   return Response.json(json);

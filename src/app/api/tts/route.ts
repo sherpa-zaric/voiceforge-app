@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.MIMO_API_KEY;
     const baseUrl =
-      process.env.MIMO_BASE_URL || 'https://api.xiaomimimo.com/v1';
+      process.env.MIMO_BASE_URL || 'https://token-plan-sgp.xiaomimimo.com/v1';
 
     if (!apiKey || apiKey === 'your_api_key_here') {
       return respErr('MIMO_API_KEY is not configured');
@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
 
     if (!text || typeof text !== 'string') {
       return respErr('No text provided');
+    }
+
+    if (text.length > 50000) {
+      return respErr('Text too long. Maximum 50,000 characters allowed.');
     }
 
     const user = await getUserInfo();
@@ -140,6 +144,6 @@ export async function POST(request: NextRequest) {
       return respErr('Content moderation failed. Please modify your text and try again.');
     }
 
-    return respErr(`Request failed: ${err}`);
+    return respErr('An error occurred. Please try again.');
   }
 }
