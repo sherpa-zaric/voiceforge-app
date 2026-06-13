@@ -11,6 +11,7 @@ const CREDITS_PER_CHAR = 2;
 
 export async function POST(request: NextRequest) {
   let taskId: string | undefined;
+  let createdTask: any;
 
   try {
     const { text, voiceDescription, style } = await request.json();
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Create AI task record
     taskId = getUuid();
-    await createAITask({
+    createdTask = await createAITask({
       id: taskId,
       userId: user.id,
       mediaType: 'audio',
@@ -95,6 +96,7 @@ export async function POST(request: NextRequest) {
       try {
         await updateAITaskById(taskId, {
           status: 'failed',
+          creditId: createdTask?.creditId,
           taskInfo: JSON.stringify({ errorMessage: err.message }),
         });
       } catch (updateErr) {

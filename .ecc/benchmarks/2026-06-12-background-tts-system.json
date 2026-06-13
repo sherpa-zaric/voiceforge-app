@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-06-12T23:29:00Z",
+  "description": "Background TTS Task System - Initial Benchmark",
+  "metrics": {
+    "coreWebVitals": {
+      "ttfb": { "value": 186, "unit": "ms", "target": 800, "status": "pass" },
+      "fcp": { "value": 308, "unit": "ms", "target": 1800, "status": "pass" },
+      "lcp": { "value": 0, "unit": "ms", "target": 2500, "status": "warning" },
+      "cls": { "value": 0, "unit": "score", "target": 0.1, "status": "pass" }
+    },
+    "resources": {
+      "totalSize": { "value": 2938199, "unit": "bytes", "target": 1048576, "status": "fail" },
+      "jsSize": { "value": 2873903, "unit": "bytes", "target": 204800, "status": "fail" },
+      "cssSize": { "value": 62661, "unit": "bytes", "target": 102400, "status": "pass" },
+      "imageSize": { "value": 600, "unit": "bytes", "target": 512000, "status": "pass" },
+      "thirdPartySize": { "value": 0, "unit": "bytes", "target": 0, "status": "pass" }
+    },
+    "network": {
+      "requests": { "value": 63, "unit": "count", "target": 50, "status": "warning" }
+    },
+    "api": {
+      "ttsQueryAvgLatency": { "value": 15, "unit": "ms", "target": 100, "status": "pass" }
+    }
+  },
+  "recommendations": [
+    "Optimize JS bundle size with code splitting and dynamic imports",
+    "Investigate LCP measurement - may need static content",
+    "Consider lazy loading for non-critical resources",
+    "Monitor API performance under actual user load"
+  ],
+  "changes": [
+    "Added background task processing to TTS API",
+    "Modified PresetTab with polling mechanism",
+    "Added new API routes: /api/tts/query, /api/tts/continue"
+  ]
+}

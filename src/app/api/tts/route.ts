@@ -12,6 +12,7 @@ const PROCESSING_TIME_BUDGET_MS = 240_000; // 4 minutes
 
 export async function POST(request: NextRequest) {
   let taskId: string | undefined;
+  let createdTask: any;
 
   try {
     const { text, voice, style, scene } = await request.json();
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       scene: scene || 'preset',
     };
 
-    await createAITask(newAITask);
+    const createdTask = await createAITask(newAITask);
 
     // Start TTS processing with time budget
     const startTime = Date.now();
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
       try {
         await updateAITaskById(taskId, {
           status: 'failed',
+          creditId: createdTask?.creditId,
           taskInfo: JSON.stringify({ errorMessage: err.message }),
         });
       } catch (updateErr) {

@@ -116,6 +116,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('Continue task failed:', err);
-    return respErr(`Request failed: ${err}`);
+    return respErr('An error occurred. Please try again.');
   }
 }

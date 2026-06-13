@@ -11,6 +11,7 @@ const CREDITS_PER_CHAR = 1;
 
 export async function POST(request: NextRequest) {
   let taskId: string | undefined;
+  let createdTask: any;
 
   try {
     const { text, voice, style } = await request.json();
@@ -25,6 +26,10 @@ export async function POST(request: NextRequest) {
 
     if (!text || typeof text !== 'string') {
       return respErr('No text provided');
+    }
+
+    if (text.length > 50000) {
+      return respErr('Text too long. Maximum 50,000 characters allowed.');
     }
 
     const user = await getUserInfo();
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Create AI task record
     taskId = getUuid();
-    await createAITask({
+    createdTask = await createAITask({
       id: taskId,
       userId: user.id,
       mediaType: 'audio',
@@ -97,6 +102,7 @@ export async function POST(request: NextRequest) {
       try {
         await updateAITaskById(taskId, {
           status: 'failed',
+          creditId: createdTask?.creditId,
           taskInfo: JSON.stringify({ errorMessage: err.message }),
         });
       } catch (updateErr) {

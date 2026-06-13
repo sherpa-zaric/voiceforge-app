@@ -163,6 +163,6 @@ export async function POST(request: NextRequest) {
       })),
     });
   } catch (err) {
-    return respErr(`Parse failed: ${err}`);
+    return respErr('An error occurred. Please try again.');
   }
 }
