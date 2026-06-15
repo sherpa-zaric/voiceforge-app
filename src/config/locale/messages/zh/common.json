@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "ShipAny 模板二",
-    "description": "ShipAny 是用于构建 AI SaaS 创业项目的 NextJS 脚手架。提供丰富模板和组件，助您快速上线产品。",
-    "keywords": "shipany, shipany-boilerplate, shipany-template-two-demo"
+    "title": "VocalVia — AI 语音工作室",
+    "description": "VocalVia 是一款 AI 语音工作室，支持语音设计、克隆和生成。通过 AI 驱动的文本转语音、语音设计和语音克隆，创造独特的声音。",
+    "keywords": "vocalvia, ai语音, 文本转语音, 语音克隆, 语音设计, tts, ai音频"
   },
   "sign": {
     "sign_in_title": "登录",

@@ -1,9 +1,9 @@
 {
-  "name": "shipany-template-two",
+  "name": "vocalvia",
   "version": "1.8.3",
   "private": true,
-  "author": "ShipAny.ai",
-  "homepage": "https://shipany.ai",
+  "author": "VocalVia",
+  "homepage": "https://vocalvia.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/shipanyai/shipany-template-two"

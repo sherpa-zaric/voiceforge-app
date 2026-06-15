@@ -1407,10 +1407,10 @@ export default function TTSPage() {
       <main className="w-full max-w-2xl px-4 py-12 sm:py-20">
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Voice<span className="text-primary">Forge</span>
+            Vocal<span className="text-primary">Via</span>
           </h1>
           <p className="text-muted-foreground mt-3 text-base">
-            AI Voice Studio &mdash; Design, clone, and generate voices with AI
+            AI Voice Studio &mdash; Design, Clone &amp; Generate
           </p>
         </div>
 

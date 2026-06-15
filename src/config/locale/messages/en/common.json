@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "ShipAny Template Two",
-    "description": "ShipAny is a NextJS boilerplate for building AI SaaS startups. Ship Fast with a variety of templates and components.",
-    "keywords": "shipany, shipany-boilerplate, shipany-template-two-demo"
+    "title": "VocalVia — AI Voice Studio",
+    "description": "VocalVia is an AI voice studio for designing, cloning, and generating speech. Create unique voices with AI-powered text-to-speech, voice design, and voice cloning.",
+    "keywords": "vocalvia, ai voice, text to speech, voice cloning, voice design, tts, ai audio"
   },
   "sign": {
     "sign_in_title": "Sign In",
