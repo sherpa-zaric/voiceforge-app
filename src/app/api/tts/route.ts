@@ -1,16 +1,23 @@
 import { NextRequest } from 'next/server';
 
-import { respData, respErr } from '@/shared/lib/resp';
 import { getUuid } from '@/shared/lib/hash';
+import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
+import { respData, respErr } from '@/shared/lib/resp';
 import { callTTS, mergeWavBase64, splitText } from '@/shared/lib/tts';
+import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
-import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 
 const CREDITS_PER_CHAR = 1;
 const PROCESSING_TIME_BUDGET_MS = 240_000; // 4 minutes
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceMinIntervalRateLimit(request, {
+    intervalMs: 10_000,
+    keyPrefix: 'tts',
+  });
+  if (rateLimited) return rateLimited;
+
   let taskId: string | undefined;
   let createdTask: any;
 
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
       scene: scene || 'preset',
     };
 
-    const createdTask = await createAITask(newAITask);
+    createdTask = await createAITask(newAITask);
 
     // Start TTS processing with time budget
     const startTime = Date.now();
@@ -109,7 +116,8 @@ export async function POST(request: NextRequest) {
     await updateAITaskById(taskId, {
       status,
       audioData,
-      processedChunks: status === 'paused' ? JSON.stringify(processedChunks) : null,
+      processedChunks:
+        status === 'paused' ? JSON.stringify(processedChunks) : null,
       totalChunks: chunks.length,
       taskResult: JSON.stringify({
         duration: chunks.length * 2, // estimated duration
@@ -143,7 +151,9 @@ export async function POST(request: NextRequest) {
 
     // Handle content filter rejection
     if (err.message === 'CONTENT_FILTERED') {
-      return respErr('Content moderation failed. Please modify your text and try again.');
+      return respErr(
+        'Content moderation failed. Please modify your text and try again.'
+      );
     }
 
     return respErr('An error occurred. Please try again.');

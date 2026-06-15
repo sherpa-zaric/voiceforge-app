@@ -1,15 +1,22 @@
 import { NextRequest } from 'next/server';
 
-import { respData, respErr } from '@/shared/lib/resp';
 import { getUuid } from '@/shared/lib/hash';
+import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
+import { respData, respErr } from '@/shared/lib/resp';
 import { callVoiceDesign, mergeWavBase64, splitText } from '@/shared/lib/tts';
+import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
-import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 
 const CREDITS_PER_CHAR = 2;
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceMinIntervalRateLimit(request, {
+    intervalMs: 10_000,
+    keyPrefix: 'voice-design',
+  });
+  if (rateLimited) return rateLimited;
+
   let taskId: string | undefined;
   let createdTask: any;
 
@@ -106,7 +113,9 @@ export async function POST(request: NextRequest) {
 
     // Handle content filter rejection
     if (err.message === 'CONTENT_FILTERED') {
-      return respErr('Content moderation failed. Please modify your text and try again.');
+      return respErr(
+        'Content moderation failed. Please modify your text and try again.'
+      );
     }
 
     return respErr('An error occurred. Please try again.');

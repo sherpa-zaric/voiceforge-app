@@ -99,8 +99,7 @@ export async function callTTS(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error(`MiMo API error: ${res.status} ${errText.slice(0, 200)}`);
+    throw new Error(`MiMo API error: ${res.status}`);
   }
   const data = await res.json();
   if (data.error) {
@@ -143,7 +142,7 @@ export async function callVoiceDesign(
     audio: { format: 'wav' },
     stream: false,
   };
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetchWithRetry(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
     body: JSON.stringify(body),
@@ -183,7 +182,7 @@ export async function callVoiceClone(
     },
     stream: false,
   };
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetchWithRetry(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
     body: JSON.stringify(body),

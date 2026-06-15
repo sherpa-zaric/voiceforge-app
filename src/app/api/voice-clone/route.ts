@@ -1,15 +1,22 @@
 import { NextRequest } from 'next/server';
 
-import { respData, respErr } from '@/shared/lib/resp';
 import { getUuid } from '@/shared/lib/hash';
+import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
+import { respData, respErr } from '@/shared/lib/resp';
 import { callVoiceClone } from '@/shared/lib/tts';
+import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
-import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
 
 const CREDITS_PER_CHAR = 3;
 
 export async function POST(request: NextRequest) {
+  const rateLimited = enforceMinIntervalRateLimit(request, {
+    intervalMs: 10_000,
+    keyPrefix: 'voice-clone',
+  });
+  if (rateLimited) return rateLimited;
+
   let taskId: string | undefined;
   let createdTask: any;
 
@@ -34,6 +41,11 @@ export async function POST(request: NextRequest) {
 
     if (!audioBase64) {
       return respErr('Voice sample audio is required');
+    }
+
+    // Limit audio input to ~7.5MB raw (10MB base64)
+    if (audioBase64.length > 10 * 1024 * 1024) {
+      return respErr('Audio file too large. Maximum 7.5MB raw audio allowed.');
     }
 
     const user = await getUserInfo();
@@ -101,7 +113,9 @@ export async function POST(request: NextRequest) {
 
     // Handle content filter rejection
     if (err.message === 'CONTENT_FILTERED') {
-      return respErr('Content moderation failed. Please modify your text and try again.');
+      return respErr(
+        'Content moderation failed. Please modify your text and try again.'
+      );
     }
 
     return respErr('An error occurred. Please try again.');

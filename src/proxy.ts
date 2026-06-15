@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 import createIntlMiddleware from 'next-intl/middleware';
@@ -22,7 +23,12 @@ export async function proxy(request: NextRequest) {
 
     if (!isApi && !isStatic && !isLoginPage && !isSiteAuth) {
       const authCookie = request.cookies.get('site_auth')?.value;
-      if (authCookie !== sitePassword) {
+      const secret = process.env.SITE_AUTH_TOKEN_SECRET || sitePassword;
+      const expectedToken = crypto
+        .createHash('sha256')
+        .update(`${sitePassword}:${secret}`)
+        .digest('hex');
+      if (authCookie !== expectedToken) {
         const locale = pathname.split('/')[1];
         const isValidLocale = routing.locales.includes(locale as any);
         const loginUrl = new URL(
