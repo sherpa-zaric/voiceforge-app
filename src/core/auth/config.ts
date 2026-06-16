@@ -31,7 +31,12 @@ const authOptions = {
   baseURL: envConfigs.auth_url,
   secret: envConfigs.auth_secret,
   trustedOrigins: envConfigs.app_url
-    ? [envConfigs.app_url, envConfigs.app_url.replace('localhost', '127.0.0.1')]
+    ? [
+        envConfigs.app_url,
+        envConfigs.app_url.replace('localhost', '127.0.0.1'),
+        envConfigs.app_url.replace('www.', ''),
+        envConfigs.app_url.replace('www.', '').replace('https://', 'https://www.'),
+      ]
     : [],
   user: {
     // Allow persisting custom columns on user table.
