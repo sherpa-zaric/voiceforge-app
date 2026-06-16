@@ -9,13 +9,13 @@ export const VOICES: VoiceOption[] = [
 
 export const STYLES: StyleOption[] = [
   { id: '', label: 'None', tag: '' },
-  { id: 'happy', label: 'Happy', tag: 'happy' },
-  { id: 'sad', label: 'Sad', tag: 'sad' },
-  { id: 'angry', label: 'Angry', tag: 'angry' },
-  { id: 'calm', label: 'Calm', tag: 'calm' },
-  { id: 'excited', label: 'Excited', tag: 'excited' },
-  { id: 'scary', label: 'Scary', tag: 'scary' },
-  { id: 'whisper', label: 'Whisper', tag: 'whisper' },
+  { id: 'happy', label: '😊 Happy', tag: 'happy' },
+  { id: 'sad', label: '😢 Sad', tag: 'sad' },
+  { id: 'angry', label: '😡 Angry', tag: 'angry' },
+  { id: 'calm', label: '😌 Calm', tag: 'calm' },
+  { id: 'excited', label: '🤩 Excited', tag: 'excited' },
+  { id: 'scary', label: '👻 Scary', tag: 'scary' },
+  { id: 'whisper', label: '🤫 Whisper', tag: 'whisper' },
 ];
 
 export const DESIGN_PRESETS: DesignPreset[] = [

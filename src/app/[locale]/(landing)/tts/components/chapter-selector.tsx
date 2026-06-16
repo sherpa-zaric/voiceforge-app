@@ -1,8 +1,10 @@
 'use client';
 
-import { cn } from '@/shared/lib/utils';
 import { useCallback, useRef } from 'react';
-import { Play, Download } from 'lucide-react';
+import { Download, Play } from 'lucide-react';
+
+import { cn } from '@/shared/lib/utils';
+
 import type { EbookChapter, EbookResult } from '../types';
 
 interface ChapterSelectorProps {
@@ -61,7 +63,11 @@ interface ChapterResultsProps {
   onDownload: (title: string, audio: string) => void;
 }
 
-export function ChapterResults({ results, onPlay, onDownload }: ChapterResultsProps) {
+export function ChapterResults({
+  results,
+  onPlay,
+  onDownload,
+}: ChapterResultsProps) {
   return (
     <div className="space-y-3">
       <label className="text-foreground/80 block text-sm font-medium">

@@ -825,27 +825,32 @@ export default function TTSPage() {
       <main className="flex-1">
         <div className="mx-auto w-full max-w-2xl px-4 py-12 sm:py-20">
           {/* Page Header */}
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          <div className="mb-6 animate-[fade-in-up_0.6s_ease-out]">
+            <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
               Vocal<span className="text-primary">Via</span>
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm">
-              AI Voice Studio &mdash; Design, Clone &amp; Generate
+            <p className="text-primary mt-2 text-base font-medium">
+              AI Voice Studio
             </p>
           </div>
 
-          {/* Desktop Tab Bar (hidden on mobile - use bottom tabs) */}
-          <div className="border-border mb-6 hidden border-b md:flex">
-            <TabButton
-              active={tab === 'preset'}
-              onClick={() => setTab('preset')}
-            >
+          {/* Hero Waveform Decoration */}
+          <div className="animate-[fade-in-up_0.6s_ease-out_0.1s_both] mb-8 h-14 w-full overflow-hidden rounded-2xl bg-white/[0.03] dark:bg-white/[0.03]">
+            <div
+              className="h-full w-[200%]"
+              style={{
+                background: 'repeating-linear-gradient(90deg, transparent, transparent 6px, oklch(0.75 0.15 85 / 0.25) 6px, oklch(0.75 0.15 85 / 0.25) 8px)',
+                animation: 'waveform-flow 6s linear infinite',
+              }}
+            />
+          </div>
+
+          {/* Desktop Tab Bar */}
+          <div className="animate-[fade-in-up_0.6s_ease-out_0.2s_both] bg-card/50 mb-6 hidden rounded-2xl border border-white/10 p-1 backdrop-blur-xl md:flex">
+            <TabButton active={tab === 'preset'} onClick={() => setTab('preset')}>
               Preset Voices
             </TabButton>
-            <TabButton
-              active={tab === 'design'}
-              onClick={() => setTab('design')}
-            >
+            <TabButton active={tab === 'design'} onClick={() => setTab('design')}>
               Voice Design
             </TabButton>
             <TabButton active={tab === 'clone'} onClick={() => setTab('clone')}>

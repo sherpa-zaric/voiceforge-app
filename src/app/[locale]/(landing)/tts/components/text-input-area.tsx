@@ -48,7 +48,7 @@ export function TextInputArea({
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
         placeholder={placeholder}
-        className="bg-card border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20 w-full resize-y rounded-lg border p-3 text-sm font-sans leading-relaxed outline-none transition-colors focus:ring-2"
+        className="w-full min-h-[120px] resize-y rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm font-sans leading-relaxed text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
         aria-label={label}
       />
       {hint && (

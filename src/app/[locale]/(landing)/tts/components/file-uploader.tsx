@@ -1,8 +1,9 @@
 'use client';
 
-import { cn } from '@/shared/lib/utils';
-import { Upload, Mic } from 'lucide-react';
 import { useCallback, useRef, useState, type DragEvent } from 'react';
+import { Mic, Upload } from 'lucide-react';
+
+import { cn } from '@/shared/lib/utils';
 
 interface FileUploaderProps {
   file: File | null;
@@ -49,12 +50,15 @@ export function FileUploader({
 
       if (onValidate) {
         const validationError = onValidate(f);
-        if (validationError) { setError(validationError); return; }
+        if (validationError) {
+          setError(validationError);
+          return;
+        }
       }
 
       onFileChange(f);
     },
-    [maxSize, maxSizeLabel, onValidate, onFileChange],
+    [maxSize, maxSizeLabel, onValidate, onFileChange]
   );
 
   const handleDrop = useCallback(
@@ -64,11 +68,17 @@ export function FileUploader({
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile) handleFile(droppedFile);
     },
-    [handleFile],
+    [handleFile]
   );
 
-  const handleDragOver = useCallback((e: DragEvent) => { e.preventDefault(); setDragOver(true); }, []);
-  const handleDragLeave = useCallback((e: DragEvent) => { e.preventDefault(); setDragOver(false); }, []);
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -91,7 +101,7 @@ export function FileUploader({
         className={cn(
           'border-border flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors',
           dragOver && 'border-primary bg-primary/5',
-          file && 'border-primary/50 bg-primary/5',
+          file && 'border-primary/50 bg-primary/5'
         )}
         onClick={() => !file && inputRef.current?.click()}
       >
@@ -110,7 +120,9 @@ export function FileUploader({
           <div className="space-y-1">
             <Upload className="text-primary mx-auto h-6 w-6" />
             <p className="text-foreground text-sm font-medium">{file.name}</p>
-            <p className="text-muted-foreground text-xs">{formatFileSize(file.size)}</p>
+            <p className="text-muted-foreground text-xs">
+              {formatFileSize(file.size)}
+            </p>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -129,9 +141,14 @@ export function FileUploader({
               <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
             </div>
             <p className="text-foreground text-sm font-medium">Recording...</p>
-            <p className="text-muted-foreground text-xs">{formatDuration(recordDuration)}</p>
+            <p className="text-muted-foreground text-xs">
+              {formatDuration(recordDuration)}
+            </p>
             <button
-              onClick={(e) => { e.stopPropagation(); onStopRecord?.(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStopRecord?.();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer rounded-full px-4 py-1.5 text-xs font-medium"
               type="button"
             >
@@ -141,7 +158,9 @@ export function FileUploader({
         ) : (
           <div className="space-y-2">
             <Upload className="text-muted-foreground mx-auto h-8 w-8" />
-            <p className="text-foreground text-sm font-medium">Drop your file here, or click to select</p>
+            <p className="text-foreground text-sm font-medium">
+              Drop your file here, or click to select
+            </p>
             <p className="text-muted-foreground text-xs">
               {acceptLabel} &middot; {maxSizeLabel}
             </p>
@@ -152,7 +171,10 @@ export function FileUploader({
       {/* Record button */}
       {showRecord && !file && !recording && (
         <button
-          onClick={(e) => { e.stopPropagation(); onStartRecord?.(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStartRecord?.();
+          }}
           className="text-muted-foreground hover:text-foreground mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border py-2 text-sm transition-colors"
           type="button"
         >

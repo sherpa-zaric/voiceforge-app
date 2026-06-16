@@ -28,8 +28,10 @@ export function GenerateButton({
         onClick={onClick}
         disabled={disabled}
         className={cn(
-          'bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-3 font-medium transition-all active:scale-[0.98]',
-          'disabled:cursor-not-allowed disabled:opacity-40',
+          'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl px-6 py-4 text-lg font-semibold transition-all active:scale-[0.98]',
+          'bg-gradient-to-r from-primary via-primary/90 to-primary text-primary-foreground shadow-lg shadow-primary/25',
+          'hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]',
+          'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-lg',
         )}
       >
         {isProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
