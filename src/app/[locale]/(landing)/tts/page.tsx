@@ -1,7 +1,8 @@
 'use client';
 
 import {
-  useCallback, useEffect,
+  useCallback,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -281,7 +282,7 @@ function PresetTab() {
         body: JSON.stringify({ taskId: id }),
       });
       const data = await res.json();
-      
+
       if (data.code !== 0) {
         throw new Error(data.message || 'Failed to query task');
       }
@@ -350,7 +351,7 @@ function PresetTab() {
         }),
       });
       const data = await res.json();
-      
+
       if (data.code !== 0) {
         throw new Error(data.message || 'Generation failed');
       }
@@ -531,7 +532,6 @@ function PresetTab() {
     </div>
   );
 }
-
 
 // ---------------------------------------------------------------------------
 // Voice Design Tab
@@ -1429,10 +1429,18 @@ export default function TTSPage() {
           </TabButton>
         </div>
 
-        <div className={tab === 'preset' ? '' : 'hidden'}><PresetTab /></div>
-        <div className={tab === 'design' ? '' : 'hidden'}><DesignTab /></div>
-        <div className={tab === 'clone' ? '' : 'hidden'}><CloneTab /></div>
-        <div className={tab === 'ebook' ? '' : 'hidden'}><EbookTab /></div>
+        <div className={tab === 'preset' ? '' : 'hidden'}>
+          <PresetTab />
+        </div>
+        <div className={tab === 'design' ? '' : 'hidden'}>
+          <DesignTab />
+        </div>
+        <div className={tab === 'clone' ? '' : 'hidden'}>
+          <CloneTab />
+        </div>
+        <div className={tab === 'ebook' ? '' : 'hidden'}>
+          <EbookTab />
+        </div>
       </main>
     </div>
   );

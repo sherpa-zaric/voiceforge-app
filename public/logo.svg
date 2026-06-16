@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" fill="none">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="gradE" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#7C3AED"/>
       <stop offset="100%" stop-color="#3B82F6"/>
     </linearGradient>
   </defs>
-  <!-- V icon: abstract waveform V -->
-  <!-- Left strokes: 3 sound wave curves -->
-  <path d="M6 8 Q12 18, 26 48" stroke="url(#grad)" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.45"/>
-  <path d="M11 6 Q16 18, 26 48" stroke="url(#grad)" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.7"/>
-  <path d="M16 4 Q20 18, 26 48" stroke="url(#grad)" stroke-width="3" stroke-linecap="round" fill="none"/>
-  <!-- Right stroke: solid -->
-  <path d="M46 8 Q38 20, 26 48" stroke="url(#grad)" stroke-width="3" stroke-linecap="round" fill="none"/>
-  <!-- "VocalVia" text -->
-  <text x="58" y="40" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="32" font-weight="700" fill="url(#grad)">Vocal</text>
-  <text x="152" y="40" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="32" font-weight="700" fill="url(#grad)" opacity="0.7">Via</text>
+  <!-- Bold geometric V with waveform bars -->
+  <rect x="4" y="8" width="4" height="44" rx="2" fill="url(#gradE)" opacity="0.3"/>
+  <rect x="12" y="6" width="4" height="48" rx="2" fill="url(#gradE)" opacity="0.5"/>
+  <rect x="20" y="4" width="4" height="52" rx="2" fill="url(#gradE)" opacity="0.7"/>
+  <rect x="28" y="2" width="4" height="56" rx="2" fill="url(#gradE)" opacity="0.9"/>
+  <rect x="36" y="2" width="4" height="56" rx="2" fill="url(#gradE)"/>
+  <rect x="44" y="6" width="4" height="48" rx="2" fill="url(#gradE)" opacity="0.7"/>
+  <rect x="52" y="12" width="4" height="36" rx="2" fill="url(#gradE)" opacity="0.5"/>
+  <!-- Text -->
+  <text x="66" y="40" font-family="system-ui, -apple-system, sans-serif" font-size="30" font-weight="800" letter-spacing="-1" fill="url(#gradE)">VocalVia</text>
 </svg>
