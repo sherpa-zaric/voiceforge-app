@@ -147,8 +147,19 @@ export async function callVoiceDesign(
     headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`MiMo API error: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    console.error('MiMo voice-design API error:', res.status, errBody);
+    throw new Error(`MiMo API error: ${res.status} - ${errBody.slice(0, 200)}`);
+  }
   const data = await res.json();
+
+  if (data.error) {
+    console.error('MiMo voice-design API error response:', data.error);
+    throw new Error(
+      `MiMo API error: ${data.error.message || JSON.stringify(data.error)}`
+    );
+  }
 
   // Check for content filter rejection
   const finishReason = data.choices?.[0]?.finish_reason;
@@ -157,7 +168,13 @@ export async function callVoiceDesign(
   }
 
   const audio = data.choices?.[0]?.message?.audio?.data;
-  if (!audio) throw new Error('No audio data in response');
+  if (!audio) {
+    console.error(
+      'MiMo voice-design API missing audio:',
+      JSON.stringify(data).slice(0, 500)
+    );
+    throw new Error('No audio data in response');
+  }
   return audio;
 }
 

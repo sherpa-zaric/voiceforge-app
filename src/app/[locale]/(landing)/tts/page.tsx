@@ -153,6 +153,13 @@ function PresetTabContent({
           style: style || undefined,
         }),
       });
+      if (res.status === 429) {
+        const data = await res.json();
+        throw new Error(
+          data.message ||
+            'Too many requests. Please wait a few seconds and try again.'
+        );
+      }
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || 'Generation failed');
 
@@ -277,6 +284,13 @@ function DesignTabContent({
           style: style || undefined,
         }),
       });
+      if (res.status === 429) {
+        const data = await res.json();
+        throw new Error(
+          data.message ||
+            'Too many requests. Please wait a few seconds and try again.'
+        );
+      }
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || 'Generation failed');
       setAudioSrc(`data:audio/wav;base64,${data.data.audio}`);
@@ -447,6 +461,13 @@ function CloneTabContent({
           style: style || undefined,
         }),
       });
+      if (res.status === 429) {
+        const data = await res.json();
+        throw new Error(
+          data.message ||
+            'Too many requests. Please wait a few seconds and try again.'
+        );
+      }
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || 'Generation failed');
       setAudioSrc(`data:audio/wav;base64,${data.data.audio}`);
@@ -835,22 +856,29 @@ export default function TTSPage() {
           </div>
 
           {/* Hero Waveform Decoration */}
-          <div className="animate-[fade-in-up_0.6s_ease-out_0.1s_both] mb-8 h-14 w-full overflow-hidden rounded-2xl bg-white/[0.03] dark:bg-white/[0.03]">
+          <div className="mb-8 h-14 w-full animate-[fade-in-up_0.6s_ease-out_0.1s_both] overflow-hidden rounded-2xl bg-white/[0.03] dark:bg-white/[0.03]">
             <div
               className="h-full w-[200%]"
               style={{
-                background: 'repeating-linear-gradient(90deg, transparent, transparent 6px, oklch(0.75 0.15 85 / 0.25) 6px, oklch(0.75 0.15 85 / 0.25) 8px)',
+                background:
+                  'repeating-linear-gradient(90deg, transparent, transparent 6px, oklch(0.75 0.15 85 / 0.25) 6px, oklch(0.75 0.15 85 / 0.25) 8px)',
                 animation: 'waveform-flow 6s linear infinite',
               }}
             />
           </div>
 
           {/* Desktop Tab Bar */}
-          <div className="animate-[fade-in-up_0.6s_ease-out_0.2s_both] bg-card/50 mb-6 hidden rounded-2xl border border-white/10 p-1 backdrop-blur-xl md:flex">
-            <TabButton active={tab === 'preset'} onClick={() => setTab('preset')}>
+          <div className="bg-card/50 mb-6 hidden animate-[fade-in-up_0.6s_ease-out_0.2s_both] rounded-2xl border border-white/10 p-1 backdrop-blur-xl md:flex">
+            <TabButton
+              active={tab === 'preset'}
+              onClick={() => setTab('preset')}
+            >
               Preset Voices
             </TabButton>
-            <TabButton active={tab === 'design'} onClick={() => setTab('design')}>
+            <TabButton
+              active={tab === 'design'}
+              onClick={() => setTab('design')}
+            >
               Voice Design
             </TabButton>
             <TabButton active={tab === 'clone'} onClick={() => setTab('clone')}>

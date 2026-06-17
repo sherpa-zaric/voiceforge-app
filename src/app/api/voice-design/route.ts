@@ -75,15 +75,19 @@ export async function POST(request: NextRequest) {
 
     const chunks = splitText(text).filter((c) => c.length > 0);
     const audioChunks: string[] = [];
-    for (const chunk of chunks) {
+    for (let i = 0; i < chunks.length; i++) {
       const audio = await callVoiceDesign(
-        chunk,
+        chunks[i],
         voiceDescription,
         style,
         apiKey,
         baseUrl
       );
       audioChunks.push(audio);
+      // Delay between chunks to avoid MiMo API rate limiting
+      if (i < chunks.length - 1) {
+        await new Promise((r) => setTimeout(r, 1500));
+      }
     }
     const merged = mergeWavBase64(audioChunks);
 
@@ -118,6 +122,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return respErr('An error occurred. Please try again.');
+    return respErr(err?.message || 'An error occurred. Please try again.');
   }
 }
