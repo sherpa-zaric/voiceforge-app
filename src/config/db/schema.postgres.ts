@@ -323,8 +323,8 @@ export const credit = table(
     transactionNo: text('transaction_no').unique().notNull(), // transaction no
     transactionType: text('transaction_type').notNull(), // transaction type, grant / consume
     transactionScene: text('transaction_scene'), // transaction scene, payment / subscription / gift / award
-    credits: integer('credits').notNull(), // credits amount, n or -n
-    remainingCredits: integer('remaining_credits').notNull().default(0), // remaining credits amount
+    credits: bigint('credits', { mode: 'number' }).notNull(), // credits amount, n or -n
+    remainingCredits: bigint('remaining_credits', { mode: 'number' }).notNull().default(0), // remaining credits amount
     description: text('description'), // transaction description
     expiresAt: timestamp('expires_at'), // transaction expires at
     status: text('status').notNull(), // transaction status
