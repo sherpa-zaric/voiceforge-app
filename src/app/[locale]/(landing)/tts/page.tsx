@@ -263,6 +263,61 @@ function DesignTabContent({
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
+
+  const pollTaskStatus = useCallback(async (id: string) => {
+    try {
+      const res = await fetch('/api/tts/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: id }),
+      });
+      const data = await res.json();
+      if (data.code !== 0)
+        throw new Error(data.message || 'Failed to query task');
+
+      const task = data.data;
+      setProgress(task.progress);
+
+      if (task.status === 'success') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        if (task.audio) setAudioSrc(`data:audio/wav;base64,${task.audio}`);
+        setStatus('success');
+        setTaskId(null);
+      } else if (task.status === 'failed') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        setError('Task failed');
+        setStatus('error');
+        setTaskId(null);
+      } else if (task.status === 'paused') {
+        const continueRes = await fetch('/api/tts/continue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: id }),
+        });
+        const continueData = await continueRes.json();
+        if (continueData.code !== 0)
+          throw new Error(continueData.message || 'Failed to continue task');
+        setProgress(continueData.data.progress);
+      }
+    } catch (err) {
+      console.error('Poll task failed:', err);
+    }
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     if (!text.trim() || !voiceDescription.trim()) return;
@@ -273,6 +328,7 @@ function DesignTabContent({
     setStatus('loading');
     setError(null);
     setAudioSrc(null);
+    setProgress({ current: 0, total: 0 });
 
     try {
       const res = await fetch('/api/voice-design', {
@@ -285,21 +341,48 @@ function DesignTabContent({
         }),
       });
       if (res.status === 429) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(
           data.message ||
             'Too many requests. Please wait a few seconds and try again.'
         );
       }
+      if (res.status === 504) {
+        throw new Error('Server timeout. The text may be too long. Try shorter text or split it into parts.');
+      }
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Server error (${res.status}): ${errText.slice(0, 200) || 'Please try again.'}`);
+      }
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || 'Generation failed');
-      setAudioSrc(`data:audio/wav;base64,${data.data.audio}`);
-      setStatus('success');
+
+      const task = data.data;
+      setTaskId(task.taskId);
+      setProgress(task.progress);
+
+      if (task.status === 'success') {
+        if (task.audio) setAudioSrc(`data:audio/wav;base64,${task.audio}`);
+        setStatus('success');
+        setTaskId(null);
+      } else if (task.status === 'processing' || task.status === 'paused') {
+        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = setInterval(
+          () => pollTaskStatus(task.taskId),
+          2000
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setStatus('error');
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
     }
-  }, [text, voiceDescription, style, user, setIsShowSignModal]);
+  }, [text, voiceDescription, style, user, setIsShowSignModal, pollTaskStatus]);
+
+  const isProcessing = status === 'loading' || taskId !== null;
 
   return (
     <div className="space-y-5">
@@ -342,14 +425,15 @@ function DesignTabContent({
 
       <GenerateButton
         onClick={handleGenerate}
-        disabled={
-          status === 'loading' || !text.trim() || !voiceDescription.trim()
-        }
-        isProcessing={status === 'loading'}
+        disabled={isProcessing || !text.trim() || !voiceDescription.trim()}
+        isProcessing={isProcessing}
         label="Generate Voice"
         creditCost="2 credits per character"
       />
 
+      {isProcessing && progress.total > 0 && (
+        <ProgressTracker current={progress.current} total={progress.total} />
+      )}
       <StatusMessage status={status} error={error} />
       {audioSrc && (
         <AudioPlayer

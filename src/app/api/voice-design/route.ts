@@ -9,6 +9,7 @@ import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
 
 const CREDITS_PER_CHAR = 2;
+const PROCESSING_TIME_BUDGET_MS = 50_000; // 50s — stay under typical 60s proxy timeout
 
 export async function POST(request: NextRequest) {
   const rateLimited = enforceMinIntervalRateLimit(request, {
@@ -73,9 +74,20 @@ export async function POST(request: NextRequest) {
       scene: 'voice_design',
     });
 
+    // Process chunks with time budget to avoid proxy timeout
+    const startTime = Date.now();
     const chunks = splitText(text).filter((c) => c.length > 0);
-    const audioChunks: string[] = [];
+    const processedChunks: string[] = [];
+
+    let status = 'processing';
+    let audioData: string | null = null;
+
     for (let i = 0; i < chunks.length; i++) {
+      if (Date.now() - startTime > PROCESSING_TIME_BUDGET_MS) {
+        status = 'paused';
+        break;
+      }
+
       const audio = await callVoiceDesign(
         chunks[i],
         voiceDescription,
@@ -83,26 +95,45 @@ export async function POST(request: NextRequest) {
         apiKey,
         baseUrl
       );
-      audioChunks.push(audio);
-      // Delay between chunks to avoid MiMo API rate limiting
-      if (i < chunks.length - 1) {
-        await new Promise((r) => setTimeout(r, 1500));
+      processedChunks.push(audio);
+
+      // Save progress periodically
+      if ((i + 1) % 2 === 0 || i === chunks.length - 1) {
+        await updateAITaskById(taskId, {
+          processedChunks: JSON.stringify(processedChunks),
+          totalChunks: chunks.length,
+        });
       }
     }
-    const merged = mergeWavBase64(audioChunks);
 
-    // Update task status to success
+    // If all chunks processed, merge audio
+    if (status === 'processing' && processedChunks.length === chunks.length) {
+      audioData = mergeWavBase64(processedChunks);
+      status = 'success';
+    }
+
+    // Update task status
     await updateAITaskById(taskId, {
-      status: 'success',
-      audioData: merged,
+      status,
+      audioData,
+      processedChunks:
+        status === 'paused' ? JSON.stringify(processedChunks) : null,
+      totalChunks: chunks.length,
       taskResult: JSON.stringify({}),
     });
 
-    return respData({ audio: merged });
+    return respData({
+      taskId,
+      status,
+      progress: {
+        current: processedChunks.length,
+        total: chunks.length,
+      },
+      audio: audioData,
+    });
   } catch (err: any) {
     console.error('Voice design failed:', err);
 
-    // Update task status to failed
     if (taskId) {
       try {
         await updateAITaskById(taskId, {
@@ -115,7 +146,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Handle content filter rejection
     if (err.message === 'CONTENT_FILTERED') {
       return respErr(
         'Content moderation failed. Please modify your text and try again.'
