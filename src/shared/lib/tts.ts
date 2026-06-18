@@ -87,7 +87,7 @@ export async function callTTS(
   const body = {
     model: 'mimo-v2.5-tts',
     messages: [
-      { role: 'user', content: 'Generate speech' },
+      { role: 'user', content: style || '' },
       { role: 'assistant', content: `${styleTag}${text}` },
     ],
     audio: { format: 'wav', voice: voice || 'Mia' },
@@ -139,7 +139,7 @@ export async function callVoiceDesign(
       { role: 'user', content: voiceDescription },
       { role: 'assistant', content: `${styleTag}${text}` },
     ],
-    audio: { format: 'wav' },
+    audio: { format: 'wav', optimize_text_preview: true },
     stream: false,
   };
   const res = await fetchWithRetry(`${baseUrl}/chat/completions`, {
