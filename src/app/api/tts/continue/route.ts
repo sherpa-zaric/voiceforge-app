@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { respData, respErr } from '@/shared/lib/resp';
-import { callTTS, mergeWavBase64, splitText } from '@/shared/lib/tts';
-import type { VoiceSegment } from '@/shared/lib/voice-segments';
+import { callTTS, callVoiceDesign, mergeWavBase64, splitText } from '@/shared/lib/tts';
+import { VOICE_DESCRIPTIONS, type VoiceSegment } from '@/shared/lib/voice-segments';
 import { findAITaskById, updateAITaskById } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 
@@ -84,7 +84,15 @@ export async function POST(request: NextRequest) {
       }
 
       const { text, voice } = items[i];
-      const audio = await callTTS(text, voice, style, apiKey, baseUrl);
+      let audio: string;
+      if (segments) {
+        // Voice-design: use voicedesign model with description
+        const voiceDesc = VOICE_DESCRIPTIONS[voice] || VOICE_DESCRIPTIONS.Mia;
+        audio = await callVoiceDesign(text, voiceDesc, style, apiKey, baseUrl);
+      } else {
+        // Plain TTS: use standard model
+        audio = await callTTS(text, voice, style, apiKey, baseUrl);
+      }
       processedChunks.push(audio);
 
       if ((i + 1) % 3 === 0 || i === items.length - 1) {

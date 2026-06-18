@@ -3,9 +3,10 @@ import { NextRequest } from 'next/server';
 import { getUuid } from '@/shared/lib/hash';
 import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
 import { respData, respErr } from '@/shared/lib/resp';
-import { callTTS, mergeWavBase64 } from '@/shared/lib/tts';
+import { callVoiceDesign, mergeWavBase64 } from '@/shared/lib/tts';
 import {
   analyzeTextToSegments,
+  VOICE_DESCRIPTIONS,
   type VoiceSegment,
 } from '@/shared/lib/voice-segments';
 import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
@@ -79,12 +80,13 @@ export async function POST(request: NextRequest) {
         openrouterBaseUrl
       );
     } catch (err: any) {
-      console.error('LLM segment analysis failed, using fallback:', err.message);
+      console.error(
+        'LLM segment analysis failed, using fallback:',
+        err.message
+      );
       // Fallback: treat entire text as one segment with default voice
       analysis = {
-        segments: [
-          { id: 1, voice: 'Mia', text, type: 'narration' as const },
-        ],
+        segments: [{ id: 1, voice: 'Mia', text, type: 'narration' as const }],
         estimatedDurationSeconds: Math.ceil((charCount / 150) * 60),
       };
     }
@@ -124,9 +126,10 @@ export async function POST(request: NextRequest) {
       }
 
       const seg = segments[i];
-      const audio = await callTTS(
+      const voiceDesc = VOICE_DESCRIPTIONS[seg.voice] || VOICE_DESCRIPTIONS.Mia;
+      const audio = await callVoiceDesign(
         seg.text,
-        seg.voice,
+        voiceDesc,
         style,
         apiKey,
         baseUrl

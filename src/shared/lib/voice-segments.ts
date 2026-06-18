@@ -20,24 +20,29 @@ export interface SegmentAnalysis {
   estimatedDurationSeconds: number;
 }
 
-const AVAILABLE_VOICES = ['Mia', 'Chloe', 'Milo', 'Dean'];
+export const VOICE_DESCRIPTIONS: Record<string, string> = {
+  Mia: 'Warm, natural female voice, gentle and calm',
+  Chloe: 'Bright, energetic young female voice',
+  Milo: 'Friendly, casual young male voice',
+  Dean: 'Deep, authoritative middle-aged male voice',
+};
 
 const ANALYSIS_PROMPT = `You are a text-to-speech segment analyzer. Split text into segments and assign a voice to each.
 
-AVAILABLE VOICES:
-- Mia: Warm, natural female voice (female characters, gentle narration)
+AVAILABLE VOICES (use the voice ID):
+- Mia: Warm, natural female voice (narration, gentle female characters)
 - Chloe: Bright, energetic female voice (young female characters)
-- Milo: Friendly, casual male voice (male characters)
-- Dean: Deep, authoritative male voice (male authority figures, dramatic narration)
+- Milo: Friendly, casual male voice (young male characters)
+- Dean: Deep, authoritative male voice (older male characters, authority figures)
 
 RULES:
 1. Split at natural boundaries: paragraph breaks, speaker changes, scene transitions.
 2. Each segment gets ONE voice. No mixing within a segment.
-3. For dialogue, detect the speaker and assign an appropriate voice.
-4. For narration/description, use a narrator voice (default: Mia).
+3. For dialogue, detect the speaker gender/age and assign the appropriate voice.
+4. For narration/description, use Mia (default narrator).
 5. Keep segments 50-500 characters. Don't create tiny segments.
 6. Preserve ALL original text exactly - do not summarize or modify.
-7. Stage directions and poetic text → narration.
+7. Stage directions and poetic text → narration with Mia.
 
 OUTPUT: Return ONLY a JSON array. Each element:
 {"id": 1, "voice": "Mia", "text": "original text segment", "type": "narration"|"dialogue"}
@@ -75,7 +80,9 @@ export async function analyzeTextToSegments(
 
   if (!res.ok) {
     const errBody = await res.text().catch(() => '');
-    throw new Error(`LLM analysis failed: ${res.status} - ${errBody.slice(0, 200)}`);
+    throw new Error(
+      `LLM analysis failed: ${res.status} - ${errBody.slice(0, 200)}`
+    );
   }
 
   const data = await res.json();
@@ -90,9 +97,11 @@ export async function analyzeTextToSegments(
   const segments: VoiceSegment[] = rawSegments
     .map((seg, i) => ({
       id: i + 1,
-      voice: AVAILABLE_VOICES.includes(seg.voice) ? seg.voice : 'Mia',
+      voice: seg.voice in VOICE_DESCRIPTIONS ? seg.voice : 'Mia',
       text: String(seg.text || '').trim(),
-      type: (seg.type === 'dialogue' ? 'dialogue' : 'narration') as 'narration' | 'dialogue',
+      type: (seg.type === 'dialogue' ? 'dialogue' : 'narration') as
+        | 'narration'
+        | 'dialogue',
     }))
     .filter((seg) => seg.text.length > 0);
 
