@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server';
 
 import { respData, respErr } from '@/shared/lib/resp';
-import { getUserInfo } from '@/shared/models/user';
-import { findAITaskById, updateAITaskById } from '@/shared/models/ai_task';
 import { callTTS, mergeWavBase64, splitText } from '@/shared/lib/tts';
 import type { VoiceSegment } from '@/shared/lib/voice-segments';
+import { findAITaskById, updateAITaskById } from '@/shared/models/ai_task';
+import { getUserInfo } from '@/shared/models/user';
 
-const PROCESSING_TIME_BUDGET_MS = 240_000; // 4 minutes
+const PROCESSING_TIME_BUDGET_MS = 110_000; // 110s — under Vercel's 120s maxDuration
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (task.status !== 'paused') {
-      return respErr(`Task cannot be continued. Current status: ${task.status}`);
+      return respErr(
+        `Task cannot be continued. Current status: ${task.status}`
+      );
     }
 
     const apiKey = process.env.MIMO_API_KEY;
@@ -101,7 +103,8 @@ export async function POST(request: NextRequest) {
     await updateAITaskById(taskId, {
       status,
       audioData,
-      processedChunks: status === 'paused' ? JSON.stringify(processedChunks) : null,
+      processedChunks:
+        status === 'paused' ? JSON.stringify(processedChunks) : null,
       totalChunks,
     });
 
