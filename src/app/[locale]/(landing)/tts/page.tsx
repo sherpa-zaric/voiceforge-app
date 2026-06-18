@@ -265,6 +265,7 @@ function DesignTabContent({
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [estimatedDuration, setEstimatedDuration] = useState<number | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -286,6 +287,9 @@ function DesignTabContent({
 
       const task = data.data;
       setProgress(task.progress);
+      if (task.estimatedDurationSeconds) {
+        setEstimatedDuration(task.estimatedDurationSeconds);
+      }
 
       if (task.status === 'success') {
         if (pollIntervalRef.current) {
@@ -348,11 +352,15 @@ function DesignTabContent({
         );
       }
       if (res.status === 504) {
-        throw new Error('Server timeout. The text may be too long. Try shorter text or split it into parts.');
+        throw new Error(
+          'Server timeout. The text may be too long. Try shorter text or split it into parts.'
+        );
       }
       if (!res.ok) {
         const errText = await res.text().catch(() => '');
-        throw new Error(`Server error (${res.status}): ${errText.slice(0, 200) || 'Please try again.'}`);
+        throw new Error(
+          `Server error (${res.status}): ${errText.slice(0, 200) || 'Please try again.'}`
+        );
       }
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || 'Generation failed');
@@ -360,6 +368,9 @@ function DesignTabContent({
       const task = data.data;
       setTaskId(task.taskId);
       setProgress(task.progress);
+      if (task.estimatedDurationSeconds) {
+        setEstimatedDuration(task.estimatedDurationSeconds);
+      }
 
       if (task.status === 'success') {
         if (task.audio) setAudioSrc(`data:audio/wav;base64,${task.audio}`);
@@ -432,7 +443,18 @@ function DesignTabContent({
       />
 
       {isProcessing && progress.total > 0 && (
-        <ProgressTracker current={progress.current} total={progress.total} />
+        <div className="space-y-2">
+          <ProgressTracker
+            current={progress.current}
+            total={progress.total}
+            label={`Generating segments`}
+          />
+          {estimatedDuration && (
+            <p className="text-muted-foreground text-center text-xs">
+              Estimated time: ~{Math.ceil(estimatedDuration * (1 - progress.current / progress.total))}s remaining
+            </p>
+          )}
+        </div>
       )}
       <StatusMessage status={status} error={error} />
       {audioSrc && (

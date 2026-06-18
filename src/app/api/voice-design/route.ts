@@ -3,13 +3,18 @@ import { NextRequest } from 'next/server';
 import { getUuid } from '@/shared/lib/hash';
 import { enforceMinIntervalRateLimit } from '@/shared/lib/rate-limit';
 import { respData, respErr } from '@/shared/lib/resp';
-import { callVoiceDesign, mergeWavBase64, splitText } from '@/shared/lib/tts';
+import { callTTS, mergeWavBase64 } from '@/shared/lib/tts';
+import {
+  analyzeTextToSegments,
+  type VoiceSegment,
+} from '@/shared/lib/voice-segments';
 import { createAITask, updateAITaskById } from '@/shared/models/ai_task';
+import { getAllConfigs } from '@/shared/models/config';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
 
 const CREDITS_PER_CHAR = 2;
-const PROCESSING_TIME_BUDGET_MS = 50_000; // 50s — stay under typical 60s proxy timeout
+const PROCESSING_TIME_BUDGET_MS = 110_000; // 110s — under typical 120s proxy timeout
 
 export async function POST(request: NextRequest) {
   const rateLimited = enforceMinIntervalRateLimit(request, {
@@ -59,7 +64,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create AI task record
+    // Get OpenRouter config for text analysis
+    const configs = await getAllConfigs();
+    const openrouterApiKey = configs.openrouter_api_key;
+    const openrouterBaseUrl = configs.openrouter_base_url;
+
+    // Step 1: Analyze text into segments using LLM
+    let analysis;
+    try {
+      analysis = await analyzeTextToSegments(
+        text,
+        voiceDescription,
+        openrouterApiKey,
+        openrouterBaseUrl
+      );
+    } catch (err: any) {
+      console.error('LLM segment analysis failed, using fallback:', err.message);
+      // Fallback: treat entire text as one segment with default voice
+      analysis = {
+        segments: [
+          { id: 1, voice: 'Mia', text, type: 'narration' as const },
+        ],
+        estimatedDurationSeconds: Math.ceil((charCount / 150) * 60),
+      };
+    }
+
+    const { segments, estimatedDurationSeconds } = analysis;
+
+    // Step 2: Create AI task record
     taskId = getUuid();
     createdTask = await createAITask({
       id: taskId,
@@ -68,46 +100,50 @@ export async function POST(request: NextRequest) {
       provider: 'mimo',
       model: 'mimo-v2.5-tts-voicedesign',
       prompt: text,
-      options: JSON.stringify({ voiceDescription, style }),
+      options: JSON.stringify({
+        voiceDescription,
+        style,
+        segments,
+        estimatedDurationSeconds,
+      }),
       status: 'processing',
       costCredits: creditsNeeded,
       scene: 'voice_design',
     });
 
-    // Process chunks with time budget to avoid proxy timeout
+    // Step 3: Generate audio for each segment with time budget
     const startTime = Date.now();
-    const chunks = splitText(text).filter((c) => c.length > 0);
     const processedChunks: string[] = [];
-
     let status = 'processing';
     let audioData: string | null = null;
 
-    for (let i = 0; i < chunks.length; i++) {
+    for (let i = 0; i < segments.length; i++) {
       if (Date.now() - startTime > PROCESSING_TIME_BUDGET_MS) {
         status = 'paused';
         break;
       }
 
-      const audio = await callVoiceDesign(
-        chunks[i],
-        voiceDescription,
+      const seg = segments[i];
+      const audio = await callTTS(
+        seg.text,
+        seg.voice,
         style,
         apiKey,
         baseUrl
       );
       processedChunks.push(audio);
 
-      // Save progress periodically
-      if ((i + 1) % 2 === 0 || i === chunks.length - 1) {
+      // Save progress every 2 segments
+      if ((i + 1) % 2 === 0 || i === segments.length - 1) {
         await updateAITaskById(taskId, {
           processedChunks: JSON.stringify(processedChunks),
-          totalChunks: chunks.length,
+          totalChunks: segments.length,
         });
       }
     }
 
-    // If all chunks processed, merge audio
-    if (status === 'processing' && processedChunks.length === chunks.length) {
+    // Step 4: Merge audio if all segments processed
+    if (status === 'processing' && processedChunks.length === segments.length) {
       audioData = mergeWavBase64(processedChunks);
       status = 'success';
     }
@@ -118,8 +154,8 @@ export async function POST(request: NextRequest) {
       audioData,
       processedChunks:
         status === 'paused' ? JSON.stringify(processedChunks) : null,
-      totalChunks: chunks.length,
-      taskResult: JSON.stringify({}),
+      totalChunks: segments.length,
+      taskResult: JSON.stringify({ estimatedDurationSeconds }),
     });
 
     return respData({
@@ -127,8 +163,9 @@ export async function POST(request: NextRequest) {
       status,
       progress: {
         current: processedChunks.length,
-        total: chunks.length,
+        total: segments.length,
       },
+      estimatedDurationSeconds,
       audio: audioData,
     });
   } catch (err: any) {

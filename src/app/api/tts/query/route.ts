@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
       return respErr('Unauthorized');
     }
 
+    const taskResult = task.taskResult ? JSON.parse(task.taskResult) : {};
+
     return respData({
       id: task.id,
       status: task.status,
@@ -39,6 +41,7 @@ export async function POST(request: NextRequest) {
           : 0,
         total: task.totalChunks,
       },
+      estimatedDurationSeconds: taskResult.estimatedDurationSeconds || null,
       createdAt: task.createdAt,
     });
   } catch (err) {
