@@ -1,13 +1,13 @@
-# VocalVia Project Configuration
+# FieldBrief AI Project Configuration
 
 ## GitHub Accounts
 
 This project has two GitHub accounts configured:
 
-| Account | Status | Purpose |
-|---------|--------|---------|
+| Account          | Status                | Purpose                             |
+| ---------------- | --------------------- | ----------------------------------- |
 | **sherpa-zaric** | Active (use this one) | Primary account for this repository |
-| focusontec | Inactive | Secondary account |
+| focusontec       | Inactive              | Secondary account                   |
 
 **Repository:** `sherpa-zaric/voiceforge-app.git`
 **Active account:** `sherpa-zaric`
@@ -29,6 +29,7 @@ gh auth switch --user focusontec
 ### Push Commands
 
 Always ensure you're on `sherpa-zaric` before pushing:
+
 ```bash
 gh auth switch --user sherpa-zaric
 git push origin main
@@ -36,7 +37,7 @@ git push origin main
 
 ## Project Info
 
-- **Domain:** vocalvia.com
+- **Domain:** fieldbrief.ai
 - **Framework:** Next.js 16 with Turbopack
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** better-auth
@@ -47,6 +48,7 @@ git push origin main
 ## Environment Variables
 
 Key env vars on Vercel:
-- `NEXT_PUBLIC_APP_URL`: `https://vocalvia.com`
-- `NEXT_PUBLIC_APP_NAME`: `VocalVia`
+
+- `NEXT_PUBLIC_APP_URL`: `https://fieldbrief.ai`
+- `NEXT_PUBLIC_APP_NAME`: `FieldBrief AI`
 - `SITE_PASSWORD`: (empty — no password protection)

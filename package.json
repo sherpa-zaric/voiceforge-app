@@ -1,9 +1,9 @@
 {
-  "name": "vocalvia",
+  "name": "fieldbrief-ai",
   "version": "1.8.3",
   "private": true,
-  "author": "VocalVia",
-  "homepage": "https://vocalvia.com",
+  "author": "FieldBrief AI",
+  "homepage": "https://fieldbrief.ai",
   "repository": {
     "type": "git",
     "url": "https://github.com/shipanyai/shipany-template-two"

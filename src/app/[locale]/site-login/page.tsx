@@ -9,7 +9,7 @@ export default function SiteLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/tts';
+  const from = searchParams.get('from') || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function SiteLoginPage() {
       <div className="w-full max-w-sm space-y-6 p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold">
-            Voice<span className="text-primary">Forge</span>
+            FieldBrief<span className="text-primary"> AI</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-sm">
             This site is currently in development. Enter password to continue.

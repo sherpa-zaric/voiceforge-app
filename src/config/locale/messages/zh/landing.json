@@ -19,11 +19,6 @@
           "icon": "BriefcaseBusiness"
         },
         {
-          "title": "TTS 工作室",
-          "url": "/tts",
-          "icon": "Sparkles"
-        },
-        {
           "title": "价格",
           "url": "/pricing",
           "icon": "DollarSign"
@@ -76,11 +71,6 @@
             {
               "title": "FieldBrief 工具",
               "url": "/tools",
-              "target": "_self"
-            },
-            {
-              "title": "TTS 工作室",
-              "url": "/tts",
               "target": "_self"
             },
             {

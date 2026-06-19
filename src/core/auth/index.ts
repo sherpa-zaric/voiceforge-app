@@ -1,4 +1,4 @@
-import { betterAuth, BetterAuthOptions } from 'better-auth';
+import { betterAuth, type BetterAuthOptions } from 'better-auth';
 
 import { getAllConfigs } from '@/shared/models/config';
 

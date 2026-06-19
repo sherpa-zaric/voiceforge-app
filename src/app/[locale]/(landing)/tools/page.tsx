@@ -4,7 +4,6 @@ import { ArrowRight, ClipboardCheck, HardHat, PhoneCall } from 'lucide-react';
 import { setRequestLocale } from 'next-intl/server';
 
 import { Badge } from '@/shared/components/ui/badge';
-import { Button } from '@/shared/components/ui/button';
 import { FIELD_BRIEF_TEMPLATES } from '@/shared/lib/fieldbrief';
 
 export const metadata: Metadata = {
@@ -68,15 +67,6 @@ export default async function ToolsPage({
             </Link>
           );
         })}
-      </section>
-
-      <section className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 pb-14 sm:px-6 lg:px-8">
-        <p className="text-muted-foreground text-sm">
-          Need pure TTS, voice design, or voice clone output?
-        </p>
-        <Button asChild variant="outline">
-          <Link href="/tts">Open TTS Studio</Link>
-        </Button>
       </section>
     </main>
   );

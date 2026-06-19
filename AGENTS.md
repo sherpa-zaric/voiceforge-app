@@ -3,7 +3,8 @@
 ## Quick Start
 
 ```bash
-pnpm dev          # Dev server (Turbopack)
+pnpm dev          # Dev server (webpack; clears .next/dev first)
+pnpm dev:turbo    # Optional Turbopack dev server
 pnpm build        # Production build
 pnpm db:push      # Push schema changes
 pnpm db:studio    # Open Drizzle Studio
@@ -11,80 +12,67 @@ pnpm db:studio    # Open Drizzle Studio
 
 ## Project
 
-TTS SaaS built on ShipAny template (v1.8.3). Uses MiMo TTS API (Xiaomi) for speech synthesis.
+FieldBrief AI built on ShipAny template (v1.8.3). It turns voice notes, voicemails, and field memos into structured professional reports.
 
 **Stack**: Next.js 16, React 19, TypeScript, TailwindCSS 4, Drizzle ORM, better-auth, pnpm
 
-## Rules
+## Product
 
-### MiMo API
+Primary workflows live under `/tools`:
 
-- Base URL: `https://token-plan-sgp.xiaomimimo.com/v1` (NOT token-plan-cn)
-- Auth header: `api-key` (not `Bearer`)
-- Endpoint: `{baseUrl}/chat/completions`
-- Env vars: `MIMO_API_KEY`, `MIMO_BASE_URL`
+| Tool                   | Route                           | Cost             |
+| ---------------------- | ------------------------------- | ---------------- |
+| Construction Daily Log | `/tools/construction-daily-log` | 5 credits/report |
+| Voicemail to Job Brief | `/tools/voicemail-to-job-brief` | 5 credits/report |
+| Punch List             | `/tools/punch-list`             | 5 credits/report |
 
-### TTS Models
-
-| Model | Use Case | Credits/char |
-|-------|----------|--------------|
-| `mimo-v2.5-tts` | Preset voices | 1 |
-| `mimo-v2.5-tts-voicedesign` | Text-described voices | 2 |
-| `mimo-v2.5-tts-voiceclone` | Voice cloning | 3 |
-
-### Audio Format
-
-- WAV: 24kHz, 16-bit, mono
-- Style injection: `<style>...</style>` prefix in assistant content
-
-### SQLite
-
-- `consumeCredits` must set `createdAt` and `updatedAt` explicitly to `new Date()`
-- SQLite has no `now()` function (that's PostgreSQL)
+New users receive `300` trial credits for `7` days unless overridden in admin settings or environment config.
 
 ## Architecture
 
 ```
 src/
 ├── app/api/
-│   ├── tts/route.ts           # Preset voice TTS
-│   ├── voice-design/route.ts  # Voice design
-│   ├── voice-clone/route.ts   # Voice cloning
-│   └── ai/
-│       ├── generate/route.ts  # Task creation
-│       └── query/route.ts     # Task status query
+│   └── workflow/
+│       └── report/route.ts    # FieldBrief report generation
+├── app/[locale]/(landing)/
+│   ├── components/
+│   │   └── fieldbrief-workspace.tsx
+│   └── tools/                 # Tool listing and per-tool pages
 ├── shared/
-│   ├── lib/tts.ts             # Core TTS functions
+│   ├── lib/fieldbrief.ts      # FieldBrief templates and report formatter
 │   └── models/
 │       ├── ai_task.ts         # Task model (create/update/query)
-│       └── credit.ts          # Credit system
+│       └── credit.ts          # Credit system and trial credits
 └── config/db/
     └── schema.sqlite.ts       # Database schema
 ```
 
 ## AI Task System
 
-Uses ShipAny's built-in task system for background processing.
+Uses ShipAny's built-in task system for report history and credit consumption.
 
-**Key functions** (all in `src/shared/models/ai_task.ts`):
-- `createAITask()` - Creates task + consumes credits in transaction
-- `updateAITaskById()` - Updates status, revokes credits on failure
-- `getAITasks()` / `getAITasksCount()` - Query with filters
+**Key functions**:
 
-**Status flow**:
-```
-PENDING → PROCESSING → SUCCESS
-                    → FAILED (credits revoked)
-                    → PAUSED (partial progress saved)
-```
+- `createAITask()` in `src/shared/models/ai_task.ts` creates task records and consumes credits in a transaction.
+- `getAITasks()` / `getAITasksCount()` power activity history.
+- `grantCreditsForNewUser()` in `src/shared/models/credit.ts` grants free trial credits.
 
-**Activity page**: `/activity/ai-tasks` with tabs: all, music, image, video, audio, text
+**FieldBrief conventions**:
 
-**Important**: `mediaType` must match tab names (use `'audio'` for TTS, not `'speech'`)
+- Use `mediaType: 'text'` for FieldBrief reports.
+- Use provider `fieldbrief`.
+- Store report output in `taskResult` as JSON: `JSON.stringify({ report })`.
+- Store task options as JSON: `JSON.stringify({ templateId, sourceType, context })`.
+
+## SQLite
+
+- `consumeCredits` and credit grants must set `createdAt` and `updatedAt` explicitly to `new Date()`.
+- SQLite has no PostgreSQL-style `now()` function.
 
 ## Conventions
 
-- Use `getUuid()` for task IDs
-- Always check `getRemainingCredits()` before processing
-- Pass `userEmail` to `consumeCredits()`
-- Store task options as JSON string: `JSON.stringify({ voice, style })`
+- Use `getUuid()` for task IDs.
+- Always check `getRemainingCredits()` before processing.
+- Pass `userEmail` to `createAITask()` so credit records stay auditable.
+- Keep legacy audio generation code out of the product; FieldBrief is the active workflow surface.

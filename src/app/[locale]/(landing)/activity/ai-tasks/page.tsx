@@ -4,8 +4,6 @@ import { AudioPlayer, Empty } from '@/shared/blocks/common';
 import { AITask, getAITasks, getAITasksCount } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 
-import { ContinueButton } from './continue-button';
-
 function safeJsonParse(str: string | null | undefined): any {
   if (!str) return null;
   try {
@@ -67,47 +65,6 @@ function TaskCard({ task }: { task: AITask }) {
           {task.scene || task.model} • {task.costCredits} credits
         </p>
       </div>
-
-      {/* Audio Player for TTS tasks */}
-      {task.mediaType === 'audio' && task.audioData && (
-        <div className="mb-3">
-          <AudioPlayer
-            src={
-              task.audioData.startsWith('data:')
-                ? task.audioData
-                : `data:audio/wav;base64,${task.audioData}`
-            }
-            title="TTS Audio"
-            className="w-full"
-          />
-          <a
-            href={
-              task.audioData.startsWith('data:')
-                ? task.audioData
-                : `data:audio/wav;base64,${task.audioData}`
-            }
-            download={`tts-audio-${task.id}.wav`}
-            className="text-muted-foreground hover:text-foreground mt-2 inline-flex items-center gap-1.5 text-xs transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download WAV
-          </a>
-        </div>
-      )}
 
       {/* FieldBrief reports */}
       {fieldBriefReport && (
@@ -241,7 +198,6 @@ function TaskCard({ task }: { task: AITask }) {
       <div className="flex items-center justify-between">
         <StatusBadge status={task.status} />
         <div className="flex items-center gap-2">
-          {task.status === 'paused' && <ContinueButton taskId={task.id} />}
           <span className="text-muted-foreground text-xs">
             {formatDate(task.createdAt)}
           </span>

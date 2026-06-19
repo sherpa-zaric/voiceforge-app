@@ -535,7 +535,7 @@ export const aiTask = table(
     costCredits: integer('cost_credits').notNull().default(0),
     scene: text('scene').notNull().default(''),
     creditId: text('credit_id'), // credit consumption record id
-    // TTS background task fields
+    // Background task payload fields
     audioData: text('audio_data'), // completed audio base64 data
     processedChunks: text('processed_chunks'), // processed chunks JSON array
     totalChunks: integer('total_chunks').default(0), // total number of chunks

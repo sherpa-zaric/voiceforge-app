@@ -19,11 +19,6 @@
           "icon": "BriefcaseBusiness"
         },
         {
-          "title": "TTS Studio",
-          "url": "/tts",
-          "icon": "Sparkles"
-        },
-        {
           "title": "Pricing",
           "url": "/pricing",
           "icon": "DollarSign"
@@ -76,11 +71,6 @@
             {
               "title": "FieldBrief Tools",
               "url": "/tools",
-              "target": "_self"
-            },
-            {
-              "title": "TTS Studio",
-              "url": "/tts",
               "target": "_self"
             },
             {
