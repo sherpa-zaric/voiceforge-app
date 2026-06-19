@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
 
-import { getThemeLayout } from '@/core/theme';
-import { LocaleDetector, TopBanner } from '@/shared/blocks/common';
+import { LocaleDetector } from '@/shared/blocks/common/locale-detector';
+import { TopBanner } from '@/shared/blocks/common/top-banner';
+import LandingThemeLayout from '@/themes/default/layouts/landing';
 import {
   Footer as FooterType,
   Header as HeaderType,
@@ -16,15 +17,12 @@ export default async function LandingLayout({
   // load page data
   const t = await getTranslations('landing');
 
-  // load layout component
-  const Layout = await getThemeLayout('landing');
-
   // header and footer to display
   const header: HeaderType = t.raw('header');
   const footer: FooterType = t.raw('footer');
 
   return (
-    <Layout header={header} footer={footer}>
+    <LandingThemeLayout header={header} footer={footer}>
       <LocaleDetector />
       {header.topbanner && header.topbanner.text && (
         <TopBanner
@@ -39,6 +37,6 @@ export default async function LandingLayout({
         />
       )}
       {children}
-    </Layout>
+    </LandingThemeLayout>
   );
 }

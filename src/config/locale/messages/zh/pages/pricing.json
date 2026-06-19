@@ -1,365 +1,390 @@
 {
   "metadata": {
     "title": "价格",
-    "description": "选择方案，立即开始"
+    "description": "选择适合 FieldBrief AI 的积分方案"
   },
   "page": {
-    "title": "ShipAny 价格表",
+    "title": "FieldBrief AI 价格",
     "sections": {
       "pricing": {
         "id": "pricing",
         "title": "价格",
-        "description": "获取 ShipAny 的全部功能，极速交付你的 AI SaaS 创业项目。",
+        "description": "创建免费账号即可获得 300 试用积分，有效期 7 天。每份 FieldBrief 报告消耗 5 积分。",
         "groups": [
           {
             "name": "one-time",
-            "title": "按次付费"
+            "title": "积分包"
           },
           {
             "name": "monthly",
             "title": "包月",
             "is_featured": true,
-            "label": "立省15%"
+            "label": "适合团队"
           },
           {
             "name": "yearly",
-            "title": "包年"
+            "title": "包年",
+            "label": "省 20%"
           }
         ],
         "items": [
           {
-            "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "title": "试跑包",
+            "description": "无需订阅，用少量真实任务验证流程。",
             "features_title": "包含",
             "features": [
-              "100 积分，有效期 1 个月",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
+              "300 积分，有效期 90 天",
+              "约 60 份 FieldBrief 报告",
+              "支持日报、工单简报和 Punch List",
+              "保留生成历史和报告结果"
             ],
             "interval": "one-time",
+            "amount": 900,
+            "currency": "USD",
+            "price": "$9",
+            "original_price": "",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 6900,
+                "price": "¥69",
+                "original_price": "",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "",
+            "is_featured": false,
+            "tip": "适合验证产品价值。",
+            "button": {
+              "title": "购买积分",
+              "url": "/#pricing",
+              "icon": "RiFlashlightFill"
+            },
+            "product_id": "starter",
+            "product_name": "FieldBrief AI 试跑积分包",
+            "credits": 300,
+            "valid_days": 90,
+            "group": "one-time"
+          },
+          {
+            "title": "增长包",
+            "description": "适合持续处理现场记录、客户留言和派工备注。",
+            "label": "热门",
+            "features_title": "包含试跑包功能，此外",
+            "features": [
+              "1,200 积分，有效期 180 天",
+              "约 240 份 FieldBrief 报告",
+              "适合批量清理历史记录",
+              "无自动续费"
+            ],
+            "interval": "one-time",
+            "amount": 2900,
+            "currency": "USD",
+            "price": "$29",
+            "original_price": "",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 19900,
+                "price": "¥199",
+                "original_price": "",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "",
+            "is_featured": true,
+            "tip": "适合个人经营者和试点团队。",
+            "button": {
+              "title": "购买积分",
+              "url": "/#pricing",
+              "icon": "RiFlashlightFill"
+            },
+            "product_id": "standard",
+            "product_name": "FieldBrief AI 增长积分包",
+            "credits": 1200,
+            "valid_days": 180,
+            "group": "one-time"
+          },
+          {
+            "title": "专业包",
+            "description": "适合有季节性用量或较多项目的团队。",
+            "features_title": "包含增长包功能，此外",
+            "features": [
+              "4,000 积分，有效期 1 年",
+              "约 800 份 FieldBrief 报告",
+              "覆盖多种报告模板",
+              "优先邮件支持"
+            ],
+            "interval": "one-time",
+            "amount": 7900,
+            "currency": "USD",
+            "price": "$79",
+            "original_price": "",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 54900,
+                "price": "¥549",
+                "original_price": "",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "",
+            "is_featured": false,
+            "tip": "一次购买，按需使用。",
+            "button": {
+              "title": "购买积分",
+              "url": "/#pricing",
+              "icon": "RiFlashlightFill"
+            },
+            "product_id": "premium",
+            "product_name": "FieldBrief AI 专业积分包",
+            "credits": 4000,
+            "valid_days": 365,
+            "group": "one-time"
+          },
+          {
+            "title": "入门版",
+            "description": "适合每周把现场笔记整理成正式报告的个人用户。",
+            "features_title": "包含",
+            "features": [
+              "每月 1,000 积分",
+              "约 200 份 FieldBrief 报告",
+              "全部现有报告模板",
+              "生成历史和账单入口"
+            ],
+            "interval": "month",
+            "amount": 1900,
+            "currency": "USD",
+            "price": "$19",
+            "original_price": "",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 13900,
+                "price": "¥139",
+                "original_price": "",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "/ 月",
+            "is_featured": false,
+            "tip": "适合稳定的个人使用。",
+            "button": {
+              "title": "订阅",
+              "url": "/#pricing",
+              "icon": "RiFlashlightFill"
+            },
+            "product_id": "starter-monthly",
+            "product_name": "FieldBrief AI 入门版包月",
+            "credits": 1000,
+            "valid_days": 30,
+            "group": "monthly",
+            "plan_name": "入门版"
+          },
+          {
+            "title": "团队版",
+            "description": "适合每天处理现场记录、客户留言和巡检备忘的团队。",
+            "label": "推荐",
+            "features_title": "包含入门版功能，此外",
+            "features": [
+              "每月 3,500 积分",
+              "约 700 份 FieldBrief 报告",
+              "适合更高频的现场运营",
+              "优先支持"
+            ],
+            "interval": "month",
+            "amount": 4900,
+            "currency": "USD",
+            "price": "$49",
+            "original_price": "",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 34900,
+                "price": "¥349",
+                "original_price": "",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "/ 月",
+            "is_featured": true,
+            "tip": "推荐给活跃团队。",
+            "button": {
+              "title": "订阅",
+              "url": "/#pricing",
+              "icon": "RiFlashlightFill"
+            },
+            "product_id": "standard-monthly",
+            "product_name": "FieldBrief AI 团队版包月",
+            "credits": 3500,
+            "valid_days": 30,
+            "group": "monthly",
+            "plan_name": "团队版"
+          },
+          {
+            "title": "商业版",
+            "description": "适合高用量运营团队和服务型公司。",
+            "features_title": "包含团队版功能，此外",
+            "features": [
+              "每月 10,000 积分",
+              "约 2,000 份 FieldBrief 报告",
+              "适合派工和项目行政团队",
+              "优先支持队列"
+            ],
+            "interval": "month",
             "amount": 9900,
             "currency": "USD",
             "price": "$99",
-            "original_price": "$199",
+            "original_price": "",
             "currencies": [
               {
                 "currency": "CNY",
                 "amount": 69900,
                 "price": "¥699",
-                "original_price": "¥1399",
+                "original_price": "",
                 "payment_providers": ["stripe"]
               }
             ],
-            "unit": "",
-            "is_featured": false,
-            "tip": "一次付费，畅享无限项目部署！",
-            "button": {
-              "title": "获取 ShipAny",
-              "url": "/#pricing",
-              "icon": "RiFlashlightFill"
-            },
-            "product_id": "starter",
-            "product_name": "ShipAny 模板入门版",
-            "credits": 100,
-            "valid_days": 30,
-            "group": "one-time"
-          },
-          {
-            "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
-            "label": "热门",
-            "features_title": "包含入门版功能，此外",
-            "features": [
-              "200 积分，有效期 3 个月",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
-            ],
-            "interval": "one-time",
-            "amount": 19900,
-            "currency": "USD",
-            "price": "$199",
-            "original_price": "$299",
-            "currencies": [
-              {
-                "currency": "CNY",
-                "amount": 139900,
-                "price": "¥1399",
-                "original_price": "¥1999",
-                "payment_providers": ["stripe"]
-              }
-            ],
-            "unit": "",
-            "is_featured": true,
-            "tip": "一次付费，畅享无限项目部署！",
-            "button": {
-              "title": "获取 ShipAny",
-              "url": "/#pricing",
-              "icon": "RiFlashlightFill"
-            },
-            "product_id": "standard",
-            "product_name": "ShipAny 模板标准版",
-            "credits": 200,
-            "valid_days": 90,
-            "group": "one-time"
-          },
-          {
-            "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
-            "features_title": "包含标准版功能，此外",
-            "features": [
-              "300 积分，有效期 1 年",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
-            ],
-            "interval": "one-time",
-            "amount": 29900,
-            "currency": "USD",
-            "price": "$299",
-            "original_price": "$399",
-            "currencies": [
-              {
-                "currency": "CNY",
-                "amount": 199900,
-                "price": "¥1999",
-                "original_price": "¥2799",
-                "payment_providers": ["stripe", "creem"]
-              }
-            ],
-            "unit": "",
-            "is_featured": false,
-            "tip": "一次付费，畅享无限项目部署！",
-            "button": {
-              "title": "获取 ShipAny",
-              "url": "/#pricing",
-              "icon": "RiFlashlightFill"
-            },
-            "product_id": "premium",
-            "product_name": "ShipAny 模板高级版",
-            "credits": 300,
-            "valid_days": 365,
-            "group": "one-time"
-          },
-          {
-            "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
-            "features_title": "包含",
-            "features": [
-              "100 积分，有效期 1 个月",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
-            ],
-            "interval": "month",
-            "amount": 8900,
-            "currency": "USD",
-            "price": "$89",
-            "original_price": "$99",
             "unit": "/ 月",
             "is_featured": false,
-            "tip": "按月付费，畅享无限项目部署！",
+            "tip": "适合更大的月度工作量。",
             "button": {
-              "title": "获取 ShipAny",
-              "url": "/#pricing",
-              "icon": "RiFlashlightFill"
-            },
-            "product_id": "starter-monthly",
-            "product_name": "ShipAny 模板入门版包月",
-            "credits": 100,
-            "valid_days": 30,
-            "group": "monthly",
-            "plan_name": "入门版"
-          },
-          {
-            "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
-            "label": "热门",
-            "features_title": "包含入门版功能，此外",
-            "features": [
-              "200 积分，有效期 1 个月",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
-            ],
-            "interval": "month",
-            "amount": 16900,
-            "currency": "USD",
-            "price": "$169",
-            "original_price": "$199",
-            "unit": "/ 月",
-            "is_featured": true,
-            "tip": "按月付费，极速上线你的 SaaS 项目。",
-            "button": {
-              "title": "获取 ShipAny",
-              "url": "/#pricing",
-              "icon": "RiFlashlightFill"
-            },
-            "product_id": "standard-monthly",
-            "product_name": "ShipAny 模板标准版包月",
-            "credits": 200,
-            "valid_days": 30,
-            "group": "monthly",
-            "plan_name": "标准版"
-          },
-          {
-            "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
-            "features_title": "包含标准版功能，此外",
-            "features": [
-              "300 积分，有效期 1 个月",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
-            ],
-            "interval": "month",
-            "amount": 24900,
-            "currency": "USD",
-            "price": "$249",
-            "original_price": "$299",
-            "unit": "/ 月",
-            "is_featured": false,
-            "tip": "按月付费，助你交付任何 AI SaaS 项目。",
-            "button": {
-              "title": "获取 ShipAny",
+              "title": "订阅",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-monthly",
-            "product_name": "ShipAny 模板高级版包月",
-            "credits": 300,
+            "product_name": "FieldBrief AI 商业版包月",
+            "credits": 10000,
             "valid_days": 30,
             "group": "monthly",
-            "plan_name": "高级版"
+            "plan_name": "商业版"
           },
           {
-            "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "title": "入门版包年",
+            "description": "适合稳定个人使用的年度积分。",
             "features_title": "包含",
             "features": [
-              "100 积分，有效期 1 年",
-              "NextJS 项目模板",
-              "SEO 友好结构",
-              "支持 Stripe 支付",
-              "Supabase 数据存储",
-              "Google Oauth & 一键登录",
-              "多语言（i18n）支持"
+              "每年 12,000 积分",
+              "约 2,400 份 FieldBrief 报告",
+              "全部现有报告模板",
+              "相比月付包含约 2 个月优惠"
             ],
             "interval": "year",
-            "amount": 82800,
+            "amount": 19000,
             "currency": "USD",
-            "price": "$69",
-            "original_price": "$89",
-            "unit": "/ 月",
+            "price": "$190",
+            "original_price": "$228",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 129900,
+                "price": "¥1299",
+                "original_price": "¥1668",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "/ 年",
             "is_featured": false,
-            "tip": "按年付费，畅享无限项目部署！",
+            "tip": "年度入门方案。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "订阅",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter-yearly",
-            "product_name": "ShipAny 模板入门版包年",
-            "credits": 1200,
+            "product_name": "FieldBrief AI 入门版包年",
+            "credits": 12000,
             "valid_days": 365,
             "group": "yearly",
             "plan_name": "入门版"
           },
           {
-            "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
-            "label": "热门",
-            "features_title": "包含入门版功能，此外",
+            "title": "团队版包年",
+            "description": "适合活跃现场团队的年度方案。",
+            "label": "最划算",
+            "features_title": "包含入门版包年功能，此外",
             "features": [
-              "200 积分，有效期 1 年",
-              "支持 Vercel 或 Cloudflare 部署",
-              "自动生成隐私政策&服务条款",
-              "集成 Google Analytics",
-              "集成 Google Search Console",
-              "Discord 技术社区",
-              "首个上线项目技术支持",
-              "终身免费更新"
+              "每年 42,000 积分",
+              "约 8,400 份 FieldBrief 报告",
+              "适合更高频的现场运营",
+              "优先支持"
             ],
             "interval": "year",
-            "amount": 154800,
+            "amount": 49000,
             "currency": "USD",
-            "price": "$129",
-            "original_price": "$169",
-            "unit": "/ 月",
+            "price": "$490",
+            "original_price": "$588",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 339900,
+                "price": "¥3399",
+                "original_price": "¥4188",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "/ 年",
             "is_featured": true,
-            "tip": "按年付费，极速上线你的 SaaS 项目。",
+            "tip": "团队年度方案里性价比最高。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "订阅",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard-yearly",
-            "product_name": "ShipAny 模板标准版包年",
-            "credits": 2400,
+            "product_name": "FieldBrief AI 团队版包年",
+            "credits": 42000,
             "valid_days": 365,
             "group": "yearly",
-            "plan_name": "标准版"
+            "plan_name": "团队版"
           },
           {
-            "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
-            "features_title": "包含标准版功能，此外",
+            "title": "商业版包年",
+            "description": "适合更大规模运营的年度容量。",
+            "features_title": "包含团队版包年功能，此外",
             "features": [
-              "300 积分，有效期 1 年",
-              "内置 AI 业务功能",
-              "用户中心",
-              "积分系统",
-              "为你的 SaaS 售卖 API",
-              "后台管理系统",
-              "优先技术支持"
+              "每年 120,000 积分",
+              "约 24,000 份 FieldBrief 报告",
+              "适合派工和项目行政团队",
+              "优先支持队列"
             ],
             "interval": "year",
-            "amount": 226800,
+            "amount": 99000,
             "currency": "USD",
-            "price": "$189",
-            "original_price": "$249",
-            "unit": "/ 月",
+            "price": "$990",
+            "original_price": "$1188",
+            "currencies": [
+              {
+                "currency": "CNY",
+                "amount": 699900,
+                "price": "¥6999",
+                "original_price": "¥8388",
+                "payment_providers": ["stripe"]
+              }
+            ],
+            "unit": "/ 年",
             "is_featured": false,
-            "tip": "按年付费，助你交付任何 AI SaaS 项目。",
+            "tip": "适合最高报告量。",
             "button": {
-              "title": "获取 ShipAny",
+              "title": "订阅",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium-yearly",
-            "product_name": "ShipAny 模板高级版包年",
-            "credits": 3600,
+            "product_name": "FieldBrief AI 商业版包年",
+            "credits": 120000,
             "valid_days": 365,
             "group": "yearly",
-            "plan_name": "高级版"
+            "plan_name": "商业版"
           }
         ]
       }
     }
   },
   "messages": {
-    "current_plan": "当前方案",
-    "processing": "处理中"
+    "processing": "处理中...",
+    "current_plan": "当前方案"
   }
 }

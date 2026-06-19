@@ -2,10 +2,10 @@
   "header": {
     "id": "header",
     "brand": {
-      "title": "VocalVia",
+      "title": "FieldBrief AI",
       "logo": {
         "src": "/logo.svg",
-        "alt": "VocalVia",
+        "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
       },
@@ -13,6 +13,11 @@
     },
     "nav": {
       "items": [
+        {
+          "title": "工具",
+          "url": "/tools",
+          "icon": "BriefcaseBusiness"
+        },
         {
           "title": "TTS 工作室",
           "url": "/tts",
@@ -53,11 +58,11 @@
   "footer": {
     "id": "footer",
     "brand": {
-      "title": "VocalVia",
-      "description": "AI 语音工作室 — 设计、克隆和生成 AI 语音。",
+      "title": "FieldBrief AI",
+      "description": "把语音记录、客户留言和现场备忘录变成专业报告。",
       "logo": {
         "src": "/logo.svg",
-        "alt": "VocalVia",
+        "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
       },
@@ -68,6 +73,11 @@
         {
           "title": "产品",
           "children": [
+            {
+              "title": "FieldBrief 工具",
+              "url": "/tools",
+              "target": "_self"
+            },
             {
               "title": "TTS 工作室",
               "url": "/tts",

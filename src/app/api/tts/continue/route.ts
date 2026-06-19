@@ -1,8 +1,16 @@
 import { NextRequest } from 'next/server';
 
 import { respData, respErr } from '@/shared/lib/resp';
-import { callTTS, callVoiceDesign, mergeWavBase64, splitText } from '@/shared/lib/tts';
-import { VOICE_DESCRIPTIONS, type VoiceSegment } from '@/shared/lib/voice-segments';
+import {
+  callTTS,
+  callVoiceDesign,
+  mergeWavBase64,
+  splitText,
+} from '@/shared/lib/tts';
+import {
+  VOICE_DESCRIPTIONS,
+  type VoiceSegment,
+} from '@/shared/lib/voice-segments';
 import { findAITaskById, updateAITaskById } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 

@@ -34,6 +34,11 @@ export enum CreditTransactionScene {
   REWARD = 'reward', // reward
 }
 
+const DEFAULT_INITIAL_CREDITS_ENABLED = 'true';
+const DEFAULT_INITIAL_CREDITS_AMOUNT = '300';
+const DEFAULT_INITIAL_CREDITS_VALID_DAYS = '7';
+const DEFAULT_INITIAL_CREDITS_DESCRIPTION = 'Free trial credits';
+
 // Calculate credit expiration time based on order and subscription info
 export function calculateCreditExpirationTime({
   creditsValidDays,
@@ -331,21 +336,32 @@ export async function grantCreditsForNewUser(user: User) {
   // get configs from db
   const configs = await getAllConfigs();
 
+  const initialCreditsEnabled =
+    configs.initial_credits_enabled ?? DEFAULT_INITIAL_CREDITS_ENABLED;
+
   // if initial credits enabled
-  if (configs.initial_credits_enabled !== 'true') {
+  if (initialCreditsEnabled !== 'true') {
     return;
   }
 
   // get initial credits amount and valid days
-  const credits = parseInt(configs.initial_credits_amount as string) || 0;
+  const credits =
+    parseInt(
+      (configs.initial_credits_amount ??
+        DEFAULT_INITIAL_CREDITS_AMOUNT) as string
+    ) || 0;
   if (credits <= 0) {
     return;
   }
 
   const creditsValidDays =
-    parseInt(configs.initial_credits_valid_days as string) || 0;
+    parseInt(
+      (configs.initial_credits_valid_days ??
+        DEFAULT_INITIAL_CREDITS_VALID_DAYS) as string
+    ) || 0;
 
-  const description = configs.initial_credits_description || 'initial credits';
+  const description =
+    configs.initial_credits_description || DEFAULT_INITIAL_CREDITS_DESCRIPTION;
 
   const newCredit = await grantCreditsForUser({
     user: user,

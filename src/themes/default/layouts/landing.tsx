@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
 
-import { getThemeBlock } from '@/core/theme';
 import {
   Footer as FooterType,
   Header as HeaderType,
 } from '@/shared/types/blocks/landing';
+
+import { Footer } from '../blocks/footer';
+import { Header } from '../blocks/header';
 
 export default async function LandingLayout({
   children,
@@ -15,9 +17,6 @@ export default async function LandingLayout({
   header: HeaderType;
   footer: FooterType;
 }) {
-  const Header = await getThemeBlock('header');
-  const Footer = await getThemeBlock('footer');
-
   return (
     <div className="h-screen w-screen">
       <Header header={header} />

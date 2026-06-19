@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vocalvia.com';
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || 'https://www.fieldbrief.ai';
 
   return [
     {
@@ -11,10 +12,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${baseUrl}/tts`,
+      url: `${baseUrl}/tools`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/tools/construction-daily-log`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/tools/voicemail-to-job-brief`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/tools/punch-list`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/tts`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/pricing`,

@@ -13,24 +13,29 @@ export type AITask = typeof aiTask.$inferSelect & {
 export type NewAITask = typeof aiTask.$inferInsert;
 export type UpdateAITask = Partial<Omit<NewAITask, 'id' | 'createdAt'>>;
 
-export async function createAITask(newAITask: NewAITask) {
+export async function createAITask(
+  newAITask: NewAITask & { userEmail?: string }
+) {
+  const { userEmail, ...insertAITask } = newAITask;
+
   const result = await db().transaction(async (tx: any) => {
     // 1. create task record (explicitly set timestamps for SQLite compatibility)
     const now = new Date();
     const taskData = {
-      ...newAITask,
+      ...insertAITask,
       createdAt: now,
       updatedAt: now,
     };
     const [taskResult] = await tx.insert(aiTask).values(taskData).returning();
 
-    if (newAITask.costCredits && newAITask.costCredits > 0) {
+    if (insertAITask.costCredits && insertAITask.costCredits > 0) {
       // 2. consume credits
       const consumedCredit = await consumeCredits({
-        userId: newAITask.userId,
-        credits: newAITask.costCredits,
-        scene: newAITask.scene,
-        description: `generate ${newAITask.mediaType}`,
+        userId: insertAITask.userId,
+        userEmail,
+        credits: insertAITask.costCredits,
+        scene: insertAITask.scene,
+        description: `generate ${insertAITask.mediaType}`,
         metadata: JSON.stringify({
           type: 'ai-task',
           mediaType: taskResult.mediaType,

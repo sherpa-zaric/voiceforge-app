@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { respData, respErr } from '@/shared/lib/resp';
-import { getUserInfo } from '@/shared/models/user';
 import { findAITaskById } from '@/shared/models/ai_task';
+import { getUserInfo } from '@/shared/models/user';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
         current: task.processedChunks
           ? JSON.parse(task.processedChunks).length
           : task.status === 'success'
-          ? task.totalChunks
-          : 0,
+            ? task.totalChunks
+            : 0,
         total: task.totalChunks,
       },
       estimatedDurationSeconds: taskResult.estimatedDurationSeconds || null,

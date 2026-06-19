@@ -2,10 +2,10 @@
   "header": {
     "id": "header",
     "brand": {
-      "title": "VocalVia",
+      "title": "FieldBrief AI",
       "logo": {
         "src": "/logo.svg",
-        "alt": "VocalVia",
+        "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
       },
@@ -13,6 +13,11 @@
     },
     "nav": {
       "items": [
+        {
+          "title": "Tools",
+          "url": "/tools",
+          "icon": "BriefcaseBusiness"
+        },
         {
           "title": "TTS Studio",
           "url": "/tts",
@@ -53,11 +58,11 @@
   "footer": {
     "id": "footer",
     "brand": {
-      "title": "VocalVia",
-      "description": "AI Voice Studio — Design, Clone & Generate with AI.",
+      "title": "FieldBrief AI",
+      "description": "Turn voice notes, voicemails, and field memos into professional reports.",
       "logo": {
         "src": "/logo.svg",
-        "alt": "VocalVia",
+        "alt": "FieldBrief AI",
         "width": 1024,
         "height": 1024
       },
@@ -68,6 +73,11 @@
         {
           "title": "Product",
           "children": [
+            {
+              "title": "FieldBrief Tools",
+              "url": "/tools",
+              "target": "_self"
+            },
             {
               "title": "TTS Studio",
               "url": "/tts",

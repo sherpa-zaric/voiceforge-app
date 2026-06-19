@@ -1,9 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 
 import { AudioPlayer, Empty } from '@/shared/blocks/common';
-import { ContinueButton } from './continue-button';
 import { AITask, getAITasks, getAITasksCount } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
+
+import { ContinueButton } from './continue-button';
 
 function safeJsonParse(str: string | null | undefined): any {
   if (!str) return null;
@@ -25,7 +26,9 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status] || 'bg-gray-50 text-gray-700 border border-gray-200'}`}>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status] || 'border border-gray-200 bg-gray-50 text-gray-700'}`}
+    >
       {status}
     </span>
   );
@@ -33,8 +36,15 @@ function StatusBadge({ status }: { status: string }) {
 
 // Task Card Component
 function TaskCard({ task }: { task: AITask }) {
+  const taskResult = safeJsonParse(task.taskResult);
+  const fieldBriefReport =
+    task.mediaType === 'text' ? taskResult?.report : null;
+
   const formatDate = (date: Date | number | string) => {
-    const d = date instanceof Date ? date : new Date(typeof date === 'number' ? date : String(date));
+    const d =
+      date instanceof Date
+        ? date
+        : new Date(typeof date === 'number' ? date : String(date));
     if (isNaN(d.getTime())) return '-';
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -49,10 +59,12 @@ function TaskCard({ task }: { task: AITask }) {
       {/* Task Info */}
       <div className="mb-3">
         <p className="text-foreground truncate text-sm font-medium">
-          {task.prompt.length > 100 ? task.prompt.slice(0, 100) + '...' : task.prompt}
+          {task.prompt.length > 100
+            ? task.prompt.slice(0, 100) + '...'
+            : task.prompt}
         </p>
         <p className="text-muted-foreground mt-1 text-xs">
-          {task.model} • {task.costCredits} credits
+          {task.scene || task.model} • {task.costCredits} credits
         </p>
       </div>
 
@@ -60,29 +72,93 @@ function TaskCard({ task }: { task: AITask }) {
       {task.mediaType === 'audio' && task.audioData && (
         <div className="mb-3">
           <AudioPlayer
-            src={task.audioData.startsWith('data:') ? task.audioData : `data:audio/wav;base64,${task.audioData}`}
+            src={
+              task.audioData.startsWith('data:')
+                ? task.audioData
+                : `data:audio/wav;base64,${task.audioData}`
+            }
             title="TTS Audio"
             className="w-full"
           />
           <a
-            href={task.audioData.startsWith('data:') ? task.audioData : `data:audio/wav;base64,${task.audioData}`}
+            href={
+              task.audioData.startsWith('data:')
+                ? task.audioData
+                : `data:audio/wav;base64,${task.audioData}`
+            }
             download={`tts-audio-${task.id}.wav`}
             className="text-muted-foreground hover:text-foreground mt-2 inline-flex items-center gap-1.5 text-xs transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             Download WAV
           </a>
         </div>
       )}
 
+      {/* FieldBrief reports */}
+      {fieldBriefReport && (
+        <div className="border-border bg-muted/30 mb-3 rounded-md border p-3">
+          <p className="text-foreground text-sm font-medium">
+            {fieldBriefReport.title}
+          </p>
+          <p className="text-muted-foreground mt-2 line-clamp-3 text-xs leading-5">
+            {fieldBriefReport.summary}
+          </p>
+          {fieldBriefReport.actions?.length > 0 && (
+            <div className="mt-3">
+              <p className="text-muted-foreground text-xs font-medium">
+                Next action
+              </p>
+              <p className="text-foreground mt-1 text-xs leading-5">
+                {fieldBriefReport.actions[0]}
+              </p>
+            </div>
+          )}
+          {fieldBriefReport.markdown && (
+            <a
+              href={`data:text/markdown;charset=utf-8,${encodeURIComponent(fieldBriefReport.markdown)}`}
+              download={`${task.scene || 'fieldbrief-report'}.md`}
+              className="text-muted-foreground hover:text-foreground mt-3 inline-flex items-center gap-1.5 text-xs transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download Markdown
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Error message for failed tasks */}
       {task.status === 'failed' && task.taskInfo && (
         <div className="mb-3 rounded-md bg-red-50 p-3">
-          <p className="text-red-600 text-xs">
+          <p className="text-xs text-red-600">
             {safeJsonParse(task.taskInfo)?.errorMessage || 'Generation failed'}
           </p>
         </div>
@@ -120,27 +196,39 @@ function TaskCard({ task }: { task: AITask }) {
             if (taskInfo.songs && taskInfo.songs.length > 0) {
               return (
                 <div className="space-y-2">
-                  {taskInfo.songs.filter((s: any) => s.audioUrl).map((song: any) => (
-                    <div key={song.id}>
-                      <AudioPlayer
-                        src={song.audioUrl}
-                        title={song.title}
-                        className="w-full"
-                      />
-                      <a
-                        href={song.audioUrl}
-                        download={`${song.title || 'audio'}.mp3`}
-                        className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1.5 text-xs transition-colors"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="7 10 12 15 17 10"/>
-                          <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        Download
-                      </a>
-                    </div>
-                  ))}
+                  {taskInfo.songs
+                    .filter((s: any) => s.audioUrl)
+                    .map((song: any) => (
+                      <div key={song.id}>
+                        <AudioPlayer
+                          src={song.audioUrl}
+                          title={song.title}
+                          className="w-full"
+                        />
+                        <a
+                          href={song.audioUrl}
+                          download={`${song.title || 'audio'}.mp3`}
+                          className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1.5 text-xs transition-colors"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          Download
+                        </a>
+                      </div>
+                    ))}
                 </div>
               );
             }
@@ -153,9 +241,7 @@ function TaskCard({ task }: { task: AITask }) {
       <div className="flex items-center justify-between">
         <StatusBadge status={task.status} />
         <div className="flex items-center gap-2">
-          {task.status === 'paused' && (
-            <ContinueButton taskId={task.id} />
-          )}
+          {task.status === 'paused' && <ContinueButton taskId={task.id} />}
           <span className="text-muted-foreground text-xs">
             {formatDate(task.createdAt)}
           </span>
@@ -195,16 +281,46 @@ export default async function AiTasksPage({
   });
 
   const tabs = [
-    { name: 'all', title: 'All', url: '/activity/ai-tasks', is_active: !type || type === 'all' },
-    { name: 'music', title: 'Music', url: '/activity/ai-tasks?type=music', is_active: type === 'music' },
-    { name: 'image', title: 'Image', url: '/activity/ai-tasks?type=image', is_active: type === 'image' },
-    { name: 'video', title: 'Video', url: '/activity/ai-tasks?type=video', is_active: type === 'video' },
-    { name: 'audio', title: 'Audio', url: '/activity/ai-tasks?type=audio', is_active: type === 'audio' },
-    { name: 'text', title: 'Text', url: '/activity/ai-tasks?type=text', is_active: type === 'text' },
+    {
+      name: 'all',
+      title: 'All',
+      url: '/activity/ai-tasks',
+      is_active: !type || type === 'all',
+    },
+    {
+      name: 'music',
+      title: 'Music',
+      url: '/activity/ai-tasks?type=music',
+      is_active: type === 'music',
+    },
+    {
+      name: 'image',
+      title: 'Image',
+      url: '/activity/ai-tasks?type=image',
+      is_active: type === 'image',
+    },
+    {
+      name: 'video',
+      title: 'Video',
+      url: '/activity/ai-tasks?type=video',
+      is_active: type === 'video',
+    },
+    {
+      name: 'audio',
+      title: 'Audio',
+      url: '/activity/ai-tasks?type=audio',
+      is_active: type === 'audio',
+    },
+    {
+      name: 'text',
+      title: 'Text',
+      url: '/activity/ai-tasks?type=text',
+      is_active: type === 'text',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -220,10 +336,10 @@ export default async function AiTasksPage({
             <a
               key={tab.name}
               href={tab.url}
-              className={`whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              className={`border-b-2 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 tab.is_active
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground border-transparent'
               }`}
             >
               {tab.title}

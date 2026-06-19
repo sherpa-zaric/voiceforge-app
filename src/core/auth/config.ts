@@ -35,7 +35,9 @@ const authOptions = {
         envConfigs.app_url,
         envConfigs.app_url.replace('localhost', '127.0.0.1'),
         envConfigs.app_url.replace('www.', ''),
-        envConfigs.app_url.replace('www.', '').replace('https://', 'https://www.'),
+        envConfigs.app_url
+          .replace('www.', '')
+          .replace('https://', 'https://www.'),
       ]
     : [],
   user: {

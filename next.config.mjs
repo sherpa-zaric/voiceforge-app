@@ -1,8 +1,11 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import bundleAnalyzer from '@next/bundle-analyzer';
 import { createMDX } from 'fumadocs-mdx/next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withMDX = createMDX();
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -11,6 +14,10 @@ const withBundleAnalyzer = bundleAnalyzer({
 const withNextIntl = createNextIntlPlugin({
   requestConfig: './src/core/i18n/request.ts',
 });
+
+const isProd = process.env.NODE_ENV === 'production';
+const enableReactCompiler = isProd || process.env.REACT_COMPILER === 'true';
+const enableTurbopackCache = process.env.TURBOPACK_FS_CACHE === 'true';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -55,6 +62,7 @@ const nextConfig = {
     ];
   },
   turbopack: {
+    root: __dirname,
     resolveAlias: {
       // fs: {
       //   browser: './empty.ts', // We recommend to fix code imports before using this method
@@ -62,11 +70,11 @@ const nextConfig = {
     },
   },
   experimental: {
-    turbopackFileSystemCacheForDev: true,
+    ...(enableTurbopackCache ? { turbopackFileSystemCacheForDev: true } : {}),
     // Disable mdxRs for Vercel deployment compatibility with fumadocs-mdx
     ...(process.env.VERCEL ? {} : { mdxRs: true }),
   },
-  reactCompiler: true,
+  reactCompiler: enableReactCompiler,
 };
 
 export default withBundleAnalyzer(withNextIntl(withMDX(nextConfig)));

@@ -265,7 +265,9 @@ function DesignTabContent({
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
-  const [estimatedDuration, setEstimatedDuration] = useState<number | null>(null);
+  const [estimatedDuration, setEstimatedDuration] = useState<number | null>(
+    null
+  );
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -451,7 +453,11 @@ function DesignTabContent({
           />
           {estimatedDuration && (
             <p className="text-muted-foreground text-center text-xs">
-              Estimated time: ~{Math.ceil(estimatedDuration * (1 - progress.current / progress.total))}s remaining
+              Estimated time: ~
+              {Math.ceil(
+                estimatedDuration * (1 - progress.current / progress.total)
+              )}
+              s remaining
             </p>
           )}
         </div>

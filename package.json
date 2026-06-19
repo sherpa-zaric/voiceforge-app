@@ -18,7 +18,9 @@
     "ai-saas-development"
   ],
   "scripts": {
-    "dev": "next dev --turbopack",
+    "predev": "rm -rf .next/dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "build:fast": "NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",

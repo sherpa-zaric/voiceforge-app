@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "VocalVia — AI 语音工作室",
-    "description": "VocalVia 是一款 AI 语音工作室，支持语音设计、克隆和生成。通过 AI 驱动的文本转语音、语音设计和语音克隆，创造独特的声音。",
-    "keywords": "vocalvia, ai语音, 文本转语音, 语音克隆, 语音设计, tts, ai音频"
+    "title": "FieldBrief AI - 语音记录转专业报告",
+    "description": "FieldBrief AI 把语音记录、客户留言和现场备忘录变成专业报告、工单简报、Punch List 和行动项。",
+    "keywords": "fieldbrief ai, 语音记录转报告, 施工日报, 客户留言转工单, punch list, ai现场报告"
   },
   "sign": {
     "sign_in_title": "登录",

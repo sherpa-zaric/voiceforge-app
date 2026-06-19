@@ -30,12 +30,16 @@ export function TextInputArea({
   return (
     <div className={cn('space-y-1.5', className)}>
       <div className="flex items-baseline justify-between">
-        <label className="text-foreground/80 block text-sm font-medium">{label}</label>
+        <label className="text-foreground/80 block text-sm font-medium">
+          {label}
+        </label>
         {(showCharCount || maxChars) && (
           <span
             className={cn(
               'text-xs',
-              maxChars && charCount > maxChars ? 'text-destructive' : 'text-muted-foreground',
+              maxChars && charCount > maxChars
+                ? 'text-destructive'
+                : 'text-muted-foreground'
             )}
           >
             {charCount}
@@ -48,12 +52,10 @@ export function TextInputArea({
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
         placeholder={placeholder}
-        className="w-full min-h-[120px] resize-y rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm font-sans leading-relaxed text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+        className="text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-primary/20 min-h-[120px] w-full resize-y rounded-xl border border-white/10 bg-white/[0.03] p-4 font-sans text-sm leading-relaxed transition-colors outline-none focus:ring-2"
         aria-label={label}
       />
-      {hint && (
-        <p className="text-muted-foreground px-1 text-xs">{hint}</p>
-      )}
+      {hint && <p className="text-muted-foreground px-1 text-xs">{hint}</p>}
     </div>
   );
 }

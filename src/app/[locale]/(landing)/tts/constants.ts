@@ -2,7 +2,11 @@ import type { DesignPreset, StyleOption, VoiceOption } from './types';
 
 export const VOICES: VoiceOption[] = [
   { id: 'Mia', label: 'Mia', description: 'Warm, natural female voice' },
-  { id: 'Chloe', label: 'Chloe', description: 'Bright, energetic female voice' },
+  {
+    id: 'Chloe',
+    label: 'Chloe',
+    description: 'Bright, energetic female voice',
+  },
   { id: 'Milo', label: 'Milo', description: 'Friendly, casual male voice' },
   { id: 'Dean', label: 'Dean', description: 'Deep, authoritative male voice' },
 ];
@@ -28,7 +32,8 @@ export const DESIGN_PRESETS: DesignPreset[] = [
   {
     id: 'podcast',
     label: 'Podcast Host',
-    description: 'Friendly, energetic young American female, great for podcasts and vlogs',
+    description:
+      'Friendly, energetic young American female, great for podcasts and vlogs',
   },
   {
     id: 'trailer',
@@ -43,12 +48,14 @@ export const DESIGN_PRESETS: DesignPreset[] = [
   {
     id: 'horror',
     label: 'Horror Host',
-    description: 'Eerie, whispering voice with unsettling pauses, perfect for horror content',
+    description:
+      'Eerie, whispering voice with unsettling pauses, perfect for horror content',
   },
   {
     id: 'anime',
     label: 'Anime Character',
-    description: 'High-pitched, expressive anime-style voice with exaggerated emotions',
+    description:
+      'High-pitched, expressive anime-style voice with exaggerated emotions',
   },
 ];
 
@@ -83,7 +90,8 @@ export async function webmToWav(blob: Blob): Promise<File> {
   const view = new DataView(buffer);
 
   const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    for (let i = 0; i < str.length; i++)
+      view.setUint8(offset + i, str.charCodeAt(i));
   };
   writeStr(0, 'RIFF');
   view.setUint32(4, 36 + dataLength, true);
@@ -107,7 +115,11 @@ export async function webmToWav(blob: Blob): Promise<File> {
   for (let i = 0; i < audioBuffer.length; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
       const sample = Math.max(-1, Math.min(1, channels[ch][i]));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      view.setInt16(
+        offset,
+        sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+        true
+      );
       offset += 2;
     }
   }

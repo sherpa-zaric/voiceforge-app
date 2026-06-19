@@ -69,3 +69,9 @@ data/
 
 # Local agent config
 AGENTS.local.md
+.agents/
+.artifacts/
+.learnings/
+.playwright-mcp/
+.workbuddy/
+vocalvia-audit/
