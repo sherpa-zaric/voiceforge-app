@@ -86,6 +86,8 @@ export async function POST(request: NextRequest) {
       context,
     });
 
+    const model = process.env.MIMO_REPORT_MODEL || 'mimo-v2.5';
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -93,11 +95,12 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'mimo-v2-flash',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
+        response_format: { type: 'json_object' },
         temperature: 0.3,
         max_completion_tokens: 4096,
       }),
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
       userEmail: user.email,
       mediaType: 'text',
       provider: 'mimo',
-      model: 'mimo-v2-flash',
+      model,
       prompt: trimmedSource,
       options: JSON.stringify({
         templateId,

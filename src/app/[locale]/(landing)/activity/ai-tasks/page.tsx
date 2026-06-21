@@ -161,16 +161,18 @@ export default async function AiTasksPage({
 
   const t = await getTranslations('activity.ai-tasks');
 
+  const mediaType = type && type !== 'all' ? type : undefined;
+
   const aiTasks = await getAITasks({
     userId: user.id,
-    mediaType: type,
+    mediaType,
     page,
     limit,
   });
 
   const total = await getAITasksCount({
     userId: user.id,
-    mediaType: type,
+    mediaType,
   });
 
   const tabs = [
@@ -240,7 +242,7 @@ export default async function AiTasksPage({
           <div className="mt-8 flex items-center justify-center gap-2">
             {page > 1 && (
               <a
-                href={`/activity/ai-tasks?type=${type || 'all'}&page=${page - 1}`}
+                href={mediaType ? `/activity/ai-tasks?type=${mediaType}&page=${page - 1}` : `/activity/ai-tasks?page=${page - 1}`}
                 className="bg-card border-border text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm"
               >
                 Previous
@@ -251,7 +253,7 @@ export default async function AiTasksPage({
             </span>
             {page < Math.ceil(total / limit) && (
               <a
-                href={`/activity/ai-tasks?type=${type || 'all'}&page=${page + 1}`}
+                href={mediaType ? `/activity/ai-tasks?type=${mediaType}&page=${page + 1}` : `/activity/ai-tasks?page=${page + 1}`}
                 className="bg-card border-border text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm"
               >
                 Next

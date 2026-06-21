@@ -109,6 +109,16 @@ export type FieldBriefLLMOutput = z.infer<typeof FieldBriefReportSchema>;
 // Prompt builders
 // ---------------------------------------------------------------------------
 
+const JSON_INSTRUCTION = `
+IMPORTANT: Return ONLY valid JSON. No markdown, no code fences, no explanations.
+The JSON must match this exact shape:
+{
+  "summary": "string (2-3 sentence summary)",
+  "sections": [{ "title": "string", "items": ["string"] }],
+  "actions": ["string"],
+  "risks": ["string"]
+}`;
+
 const SYSTEM_PROMPTS: Record<FieldBriefTemplateId, string> = {
   'construction-daily-log': `You are a construction project reporting assistant. Parse the user's rough field notes into a structured daily report.
 
@@ -119,16 +129,18 @@ Rules:
 - Keep items concise (one sentence each).
 - "actions" should be concrete next steps someone can act on.
 - "risks" should flag anything that could cause delay, safety issues, or cost overruns.
-- Do NOT include a callbackScript.`,
+- Do NOT include a "callbackScript" field.
+${JSON_INSTRUCTION}`,
 
   'voicemail-to-job-brief': `You are a dispatch coordinator assistant. Parse the user's voicemail transcript or customer message into a dispatch-ready job brief.
 
 Rules:
 - Identify: caller name, phone number, address, service request, urgency, and availability window.
-- The "callbackScript" field must be a short, natural script a dispatcher can read when calling the customer back to confirm details.
 - "sections" should include: Customer Need, Contact and Scheduling, Technician Brief.
 - "risks" should flag urgent or time-sensitive issues.
-- Do not invent details not present in the source.`,
+- Do not invent details not present in the source.
+${JSON_INSTRUCTION.replace('"risks": ["string"]', '"risks": ["string"], "callbackScript": "string"')}
+The "callbackScript" field must be a short, natural script a dispatcher can read when calling the customer back.`,
 
   'punch-list': `You are a construction closeout assistant. Parse the user's punch walk or inspection notes into a punch list.
 
@@ -138,7 +150,8 @@ Rules:
 - Include a "Closeout Checklist" section with standard closeout steps.
 - "actions" should assign each issue to the responsible trade.
 - "risks" should flag high-priority or inspection-blocking items.
-- Do not invent issues not mentioned in the source.`,
+- Do not invent issues not mentioned in the source.
+${JSON_INSTRUCTION}`,
 };
 
 function buildFieldBriefUserPrompt(args: {
