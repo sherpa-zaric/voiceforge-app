@@ -163,6 +163,7 @@ export function FieldBriefWorkspace({
   const [selectedAudioName, setSelectedAudioName] = useState<string | null>(
     null
   );
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const template = FIELD_BRIEF_TEMPLATES[templateId];
   const markdown = useMemo(
@@ -196,12 +197,49 @@ export function FieldBriefWorkspace({
     setSelectedAudioName(null);
   };
 
-  const handleAudioUpload = (file: File | null) => {
+  const handleAudioUpload = async (file: File | null) => {
     if (!file) return;
     setSourceType('voice-note');
     setSelectedAudioName(file.name);
     setStatus('idle');
     setError(null);
+
+    if (!user) {
+      setIsShowSignModal(true);
+      return;
+    }
+
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+
+      const response = await fetch('/api/workflow/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.code !== 0) {
+        throw new Error(data.message || 'Transcription failed');
+      }
+      setSourceText((prev) => {
+        const trimmed = prev.trim();
+        if (!trimmed) return data.data.text;
+        return `${trimmed}\n\n${data.data.text}`;
+      });
+    } catch (err) {
+      setStatus('error');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Transcription failed. Please paste your transcript manually.'
+      );
+    } finally {
+      setIsTranscribing(false);
+      if (audioInputRef.current) {
+        audioInputRef.current.value = '';
+      }
+    }
   };
 
   const toggleVoiceInput = () => {
@@ -550,13 +588,15 @@ export function FieldBriefWorkspace({
                   </Button>
                 </div>
                 <div className="min-h-5 text-xs leading-5 text-slate-500">
-                  {isListening || interimTranscript
-                    ? interimTranscript || 'Listening...'
-                    : selectedAudioName
-                      ? `Audio selected: ${selectedAudioName}`
-                      : speechSupported
-                        ? 'Record in browser or attach a site audio file.'
-                        : 'Browser recording unavailable; paste a transcript or field note.'}
+                  {isTranscribing
+                    ? 'Transcribing audio...'
+                    : isListening || interimTranscript
+                      ? interimTranscript || 'Listening...'
+                      : selectedAudioName
+                        ? `Audio selected: ${selectedAudioName}`
+                        : speechSupported
+                          ? 'Record in browser or attach a site audio file.'
+                          : 'Browser recording unavailable; paste a transcript or field note.'}
                 </div>
               </div>
 
@@ -571,7 +611,9 @@ export function FieldBriefWorkspace({
                 <Button
                   type="button"
                   onClick={generateReport}
-                  disabled={status === 'loading' || !sourceText.trim()}
+                  disabled={
+                    status === 'loading' || isTranscribing || !sourceText.trim()
+                  }
                   className="min-w-44 bg-blue-600 text-white hover:bg-blue-700"
                 >
                   {status === 'loading' ? (
@@ -994,37 +1036,6 @@ function WorkflowSections() {
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-slate-200 bg-slate-950 text-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-          <div>
-            <h2 className="text-3xl font-semibold tracking-normal">
-              Clear SEO position, clear product promise.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              The product should rank around proven search categories, while
-              using voice and upload support as the practical differentiation.
-            </p>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              'construction daily report software',
-              'construction daily log software',
-              'punch list app',
-              'punch list software',
-              'field report app',
-              'voicemail to text for job notes',
-            ].map((keyword) => (
-              <div
-                key={keyword}
-                className="rounded-md border border-white/10 bg-white/5 p-4 text-sm text-slate-100"
-              >
-                {keyword}
-              </div>
-            ))}
           </div>
         </div>
       </section>
