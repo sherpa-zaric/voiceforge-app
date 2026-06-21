@@ -17,7 +17,7 @@ const DISMISSED_EXPIRY_DAYS = 1; // Expiry in days
 const PREFERRED_LOCALE_KEY = 'locale';
 
 export function LocaleDetector() {
-  if (envConfigs.locale_detect_enabled !== 'true') {
+  if (envConfigs.locale_detect_enabled !== 'true' || locales.length <= 1) {
     return null;
   }
 
@@ -243,9 +243,8 @@ export function LocaleDetector() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-1 items-center gap-3">
               <span className="text-sm">
-                {browserLocale === 'zh'
-                  ? `检测到浏览器语言是: ${targetLocaleName}，是否切换？`
-                  : `We detected your browser language is ${targetLocaleName}. Switch to it?`}
+                We detected your browser language is {targetLocaleName}. Switch
+                to it?
               </span>
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
@@ -255,7 +254,7 @@ export function LocaleDetector() {
                 size="sm"
                 className="bg-background text-xs"
               >
-                {browserLocale === 'zh' ? '切换到中文' : 'Switch'}
+                Switch
               </Button>
               <button
                 onClick={handleDismiss}

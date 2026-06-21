@@ -4,7 +4,7 @@
     "brand": {
       "title": "FieldBrief AI",
       "logo": {
-        "src": "/logo.svg",
+        "src": "/logo-icon.svg",
         "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
@@ -17,6 +17,16 @@
           "title": "工具",
           "url": "/tools",
           "icon": "BriefcaseBusiness"
+        },
+        {
+          "title": "施工日报",
+          "url": "/tools/construction-daily-log",
+          "icon": "HardHat"
+        },
+        {
+          "title": "整改清单",
+          "url": "/tools/punch-list",
+          "icon": "ClipboardCheck"
         },
         {
           "title": "价格",
@@ -56,7 +66,7 @@
       "title": "FieldBrief AI",
       "description": "把语音记录、客户留言和现场备忘录变成专业报告。",
       "logo": {
-        "src": "/logo.svg",
+        "src": "/logo-icon.svg",
         "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
@@ -71,6 +81,16 @@
             {
               "title": "FieldBrief 工具",
               "url": "/tools",
+              "target": "_self"
+            },
+            {
+              "title": "施工日报",
+              "url": "/tools/construction-daily-log",
+              "target": "_self"
+            },
+            {
+              "title": "整改清单",
+              "url": "/tools/punch-list",
               "target": "_self"
             },
             {

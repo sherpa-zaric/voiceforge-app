@@ -4,7 +4,7 @@
     "brand": {
       "title": "FieldBrief AI",
       "logo": {
-        "src": "/logo.svg",
+        "src": "/logo-icon.svg",
         "alt": "FieldBrief AI",
         "width": 100,
         "height": 100
@@ -17,6 +17,16 @@
           "title": "Tools",
           "url": "/tools",
           "icon": "BriefcaseBusiness"
+        },
+        {
+          "title": "Daily Report",
+          "url": "/tools/construction-daily-log",
+          "icon": "HardHat"
+        },
+        {
+          "title": "Punch List",
+          "url": "/tools/punch-list",
+          "icon": "ClipboardCheck"
         },
         {
           "title": "Pricing",
@@ -45,7 +55,7 @@
     },
     "show_sign": true,
     "show_theme": true,
-    "show_locale": true,
+    "show_locale": false,
     "topbanner": {
       "text": ""
     }
@@ -56,10 +66,10 @@
       "title": "FieldBrief AI",
       "description": "Turn voice notes, voicemails, and field memos into professional reports.",
       "logo": {
-        "src": "/logo.svg",
+        "src": "/logo-icon.svg",
         "alt": "FieldBrief AI",
-        "width": 1024,
-        "height": 1024
+        "width": 100,
+        "height": 100
       },
       "url": "/"
     },
@@ -74,23 +84,18 @@
               "target": "_self"
             },
             {
-              "title": "Pricing",
-              "url": "/pricing",
-              "target": "_self"
-            }
-          ]
-        },
-        {
-          "title": "Legal",
-          "children": [
-            {
-              "title": "Privacy Policy",
-              "url": "/privacy-policy",
+              "title": "Construction Daily Report",
+              "url": "/tools/construction-daily-log",
               "target": "_self"
             },
             {
-              "title": "Terms of Service",
-              "url": "/terms-of-service",
+              "title": "Punch List",
+              "url": "/tools/punch-list",
+              "target": "_self"
+            },
+            {
+              "title": "Pricing",
+              "url": "/pricing",
               "target": "_self"
             }
           ]
@@ -101,18 +106,10 @@
       "items": []
     },
     "agreement": {
-      "items": [
-        {
-          "title": "Privacy Policy",
-          "url": "/privacy-policy"
-        },
-        {
-          "title": "Terms of Service",
-          "url": "/terms-of-service"
-        }
-      ]
+      "items": []
     },
     "show_theme": true,
-    "show_locale": true
+    "show_locale": false,
+    "show_built_with": false
   }
 }

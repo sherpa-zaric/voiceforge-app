@@ -1,22 +1,22 @@
 {
   "metadata": {
-    "title": "Blog",
-    "description": "Read latest product features, solutions, and updates."
+    "title": "Resources",
+    "description": "FieldBrief AI resources."
   },
   "page": {
-    "title": "ShipAny Blog",
+    "title": "FieldBrief AI Resources",
     "sections": {
       "blog": {
         "id": "blog",
-        "title": "Blog",
-        "description": "Read latest product features, solutions, and updates."
+        "title": "Resources",
+        "description": "FieldBrief AI resources."
       }
     }
   },
   "messages": {
     "all": "All",
     "no_content": "No Content",
-    "crumb": "Blog",
+    "crumb": "Resources",
     "toc": "Table of Contents"
   }
 }

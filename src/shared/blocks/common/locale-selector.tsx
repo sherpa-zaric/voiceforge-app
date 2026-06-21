@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 
 import { usePathname, useRouter } from '@/core/i18n/navigation';
-import { localeNames } from '@/config/locale';
+import { localeNames, locales } from '@/config/locale';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -30,6 +30,10 @@ export function LocaleSelector({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (locales.length <= 1) {
+    return null;
+  }
 
   const handleSwitchLanguage = (value: string) => {
     if (value !== currentLocale) {
