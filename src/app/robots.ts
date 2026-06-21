@@ -11,6 +11,20 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: [
         '/*?*q=',
+        '/blog',
+        '/blog/*',
+        '/docs',
+        '/docs/*',
+        '/en/blog',
+        '/en/blog/*',
+        '/en/docs',
+        '/en/docs/*',
+        '/en/privacy-policy',
+        '/en/showcases',
+        '/en/terms-of-service',
+        '/en/updates',
+        '/showcases',
+        '/updates',
         '/privacy-policy',
         '/terms-of-service',
         '/settings/*',
@@ -22,4 +36,3 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: `${appUrl}/sitemap.xml`,
   };
 }
-

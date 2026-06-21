@@ -1,10 +1,9 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { getThemePage } from '@/core/theme';
 import { getMetadata } from '@/shared/lib/seo';
 import { getCurrentSubscription } from '@/shared/models/subscription';
 import { getUserInfo } from '@/shared/models/user';
-import { DynamicPage } from '@/shared/types/blocks/landing';
+import { Pricing } from '@/themes/default/blocks/pricing';
 
 export const revalidate = 3600;
 
@@ -34,22 +33,12 @@ export default async function PricingPage({
 
   // get pricing data
   const t = await getTranslations('pages.pricing');
+  const section = t.raw('page.sections.pricing');
 
-  // build page sections
-  const page: DynamicPage = {
-    title: t.raw('page.title'),
-    sections: {
-      pricing: {
-        ...t.raw('page.sections.pricing'),
-        data: {
-          currentSubscription,
-        },
-      },
-    },
-  };
-
-  // load page component
-  const Page = await getThemePage('dynamic-page');
-
-  return <Page locale={locale} page={page} />;
+  return (
+    <main>
+      {t.has('page.title') && <h1 className="sr-only">{t.raw('page.title')}</h1>}
+      <Pricing section={section} currentSubscription={currentSubscription} />
+    </main>
+  );
 }

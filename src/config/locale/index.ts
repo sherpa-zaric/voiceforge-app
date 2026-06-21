@@ -1,13 +1,10 @@
-import { envConfigs } from '..';
-
 export const localeNames: any = {
   en: 'English',
-  zh: '中文',
 };
 
-export const locales = ['en', 'zh'];
+export const locales = ['en'];
 
-export const defaultLocale = envConfigs.locale;
+export const defaultLocale = 'en';
 
 export const localePrefix = 'always';
 
@@ -18,9 +15,6 @@ export const localeMessagesRootPath = '@/config/locale/messages';
 export const localeMessagesPaths = [
   'common',
   'landing',
-  'showcases',
-  'blog',
-  'updates',
   'pricing',
   'settings/sidebar',
   'settings/profile',
@@ -42,16 +36,9 @@ export const localeMessagesPaths = [
   'admin/apikeys',
   'admin/ai-tasks',
   'admin/chats',
-  'ai/music',
   'ai/chat',
-  'ai/image',
-  'ai/video',
   'activity/sidebar',
   'activity/ai-tasks',
   'activity/chats',
-  'pages/index',
   'pages/pricing',
-  'pages/showcases',
-  'pages/blog',
-  'pages/updates',
 ];

@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentType, useMemo, useState } from 'react';
+import { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -13,11 +13,14 @@ import {
   FileText,
   HardHat,
   Loader2,
+  MessageSquareText,
   Mic,
   PhoneCall,
-  Sparkles,
-  Wrench,
+  Radio,
+  ShieldCheck,
+  UploadCloud,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -32,6 +35,29 @@ import {
   formatFieldBriefMarkdown,
 } from '@/shared/lib/fieldbrief';
 import { cn } from '@/shared/lib/utils';
+
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onresult:
+    | ((event: {
+        resultIndex: number;
+        results: ArrayLike<{
+          isFinal: boolean;
+          0: { transcript: string };
+        }>;
+      }) => void)
+    | null;
+  abort: () => void;
+  start: () => void;
+  stop: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const templateIcons: Record<FieldBriefTemplateId, ComponentType<any>> = {
   'construction-daily-log': HardHat,
@@ -50,10 +76,59 @@ const sourceOptions: Array<{
 ];
 
 const workflowStats = [
-  { label: 'Workflow templates', value: '3' },
-  { label: 'Credits per report', value: '5' },
-  { label: 'Output format', value: 'Markdown' },
+  { label: 'Daily reports', value: 'Site work, delays, safety, next steps' },
+  { label: 'Punch lists', value: 'Rooms, issues, priorities, owners' },
+  { label: 'Job briefs', value: 'Caller, location, urgency, dispatch notes' },
 ];
+
+const templateSummaries: Record<
+  FieldBriefTemplateId,
+  {
+    description: string;
+    previewTitle: string;
+    previewRows: Array<{ label: string; value: string }>;
+  }
+> = {
+  'construction-daily-log': {
+    description:
+      'Turn end-of-day voice notes into a clean construction daily report.',
+    previewTitle: 'Daily Report Preview',
+    previewRows: [
+      { label: 'Project', value: 'Riverside retail shell' },
+      { label: 'Crew', value: '8 on site, 7:00 AM - 3:30 PM' },
+      {
+        label: 'Work completed',
+        value: 'West wall framing, storefront blocking',
+      },
+      { label: 'Delays', value: 'Ceiling grid delivery moved to tomorrow' },
+      { label: 'Safety', value: 'No injuries reported' },
+      { label: 'Next steps', value: 'Finish rough-in and verify delivery' },
+    ],
+  },
+  'punch-list': {
+    description:
+      'Turn a site walk or inspection memo into assigned closeout items.',
+    previewTitle: 'Punch List Preview',
+    previewRows: [
+      { label: 'Area', value: 'North corridor / Unit 207 / Lobby' },
+      { label: 'Issues', value: 'Drywall seam, outlet cover, cracked tile' },
+      { label: 'Priority', value: 'Inspection blockers first' },
+      { label: 'Trade', value: 'Drywall, electrical, flooring' },
+      { label: 'Status', value: 'Open until verified' },
+    ],
+  },
+  'voicemail-to-job-brief': {
+    description: 'Turn customer voicemails into a dispatch-ready job brief.',
+    previewTitle: 'Job Brief Preview',
+    previewRows: [
+      { label: 'Caller', value: 'Karen, 415-555-0192' },
+      { label: 'Location', value: '42 Cedar Lane' },
+      { label: 'Request', value: 'Bathroom sink leaking under cabinet' },
+      { label: 'Urgency', value: 'Water reaching vanity, home after 2 PM' },
+      { label: 'Next step', value: 'Call back and schedule technician' },
+    ],
+  },
+};
 
 interface FieldBriefWorkspaceProps {
   initialTemplateId?: FieldBriefTemplateId;
@@ -64,14 +139,15 @@ export function FieldBriefWorkspace({
   initialTemplateId = 'construction-daily-log',
   mode = 'home',
 }: FieldBriefWorkspaceProps) {
+  const locale = useLocale();
   const { user, setIsShowSignModal } = useAppContext();
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
   const [templateId, setTemplateId] =
     useState<FieldBriefTemplateId>(initialTemplateId);
   const [sourceType, setSourceType] =
     useState<FieldBriefSourceType>('voice-note');
-  const [sourceText, setSourceText] = useState<string>(
-    FIELD_BRIEF_TEMPLATES[initialTemplateId].sample
-  );
+  const [sourceText, setSourceText] = useState('');
   const [siteName, setSiteName] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [report, setReport] = useState<FieldBriefReport | null>(null);
@@ -81,20 +157,167 @@ export function FieldBriefWorkspace({
   >('idle');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [selectedAudioName, setSelectedAudioName] = useState<string | null>(
+    null
+  );
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const template = FIELD_BRIEF_TEMPLATES[templateId];
   const markdown = useMemo(
     () => (report ? formatFieldBriefMarkdown(report) : ''),
     [report]
   );
+  const href = (path: string) => {
+    if (path === '/') return `/${locale}`;
+    return `/${locale}${path}`;
+  };
+
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    setSpeechSupported(Boolean(SpeechRecognition));
+
+    return () => {
+      recognitionRef.current?.abort();
+    };
+  }, []);
 
   const selectTemplate = (nextTemplateId: FieldBriefTemplateId) => {
     setTemplateId(nextTemplateId);
-    setSourceText(FIELD_BRIEF_TEMPLATES[nextTemplateId].sample);
+    setSourceText('');
     setReport(null);
     setTaskId(null);
     setStatus('idle');
     setError(null);
+    setSelectedAudioName(null);
+  };
+
+  const handleAudioUpload = async (file: File | null) => {
+    if (!file) return;
+    setSourceType('voice-note');
+    setSelectedAudioName(file.name);
+    setStatus('idle');
+    setError(null);
+
+    if (!user) {
+      setIsShowSignModal(true);
+      return;
+    }
+
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+
+      const response = await fetch('/api/workflow/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.code !== 0) {
+        throw new Error(data.message || 'Transcription failed');
+      }
+      setSourceText((prev) => {
+        const trimmed = prev.trim();
+        if (!trimmed) return data.data.text;
+        return `${trimmed}\n\n${data.data.text}`;
+      });
+    } catch (err) {
+      setStatus('error');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Transcription failed. Please paste your transcript manually.'
+      );
+    } finally {
+      setIsTranscribing(false);
+      if (audioInputRef.current) {
+        audioInputRef.current.value = '';
+      }
+    }
+  };
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = ((window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
+
+    if (!SpeechRecognition) {
+      setStatus('error');
+      setError('Voice input is not supported in this browser.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setSourceType('voice-note');
+      setIsListening(true);
+      setInterimTranscript('');
+      setStatus('idle');
+      setError(null);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      setInterimTranscript('');
+    };
+
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      setInterimTranscript('');
+      if (event.error && event.error !== 'no-speech') {
+        setStatus('error');
+        setError(`Voice input failed: ${event.error}`);
+      }
+    };
+
+    recognition.onresult = (event) => {
+      let finalText = '';
+      let interimText = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const transcript = result[0]?.transcript || '';
+        if (result.isFinal) {
+          finalText += transcript;
+        } else {
+          interimText += transcript;
+        }
+      }
+
+      if (finalText.trim()) {
+        setSourceText((current) => {
+          const separator = current.trim() ? '\n' : '';
+          return `${current.trimEnd()}${separator}${finalText.trim()}`;
+        });
+      }
+
+      setInterimTranscript(interimText.trim());
+    };
+
+    try {
+      recognition.start();
+    } catch {
+      setStatus('error');
+      setError('Voice input could not be started.');
+    }
   };
 
   const generateReport = async () => {
@@ -154,87 +377,142 @@ export function FieldBriefWorkspace({
   };
 
   return (
-    <main className="bg-background text-foreground">
-      <section className="border-border border-b">
-        <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.94fr_1.06fr] lg:px-8 lg:py-10">
-          <div className="flex flex-col gap-6">
-            <div className="space-y-4">
-              <Badge variant="outline" className="gap-1.5">
-                <Sparkles className="size-3.5" />
-                FieldBrief AI
-              </Badge>
-              <div className="max-w-2xl space-y-3">
-                <h1 className="text-4xl font-semibold tracking-normal sm:text-5xl">
-                  Record once. Get the field report.
+    <main className="bg-white text-slate-950">
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 pt-16 pb-7 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8 lg:pt-16 lg:pb-6">
+          <div className="flex flex-col justify-between gap-8">
+            <div className="space-y-6">
+              <div className="max-w-2xl space-y-4">
+                <h1 className="text-4xl leading-[1.05] font-semibold tracking-normal text-slate-950 sm:text-5xl">
+                  Construction field reporting software for voice notes
                 </h1>
-                <p className="text-muted-foreground max-w-xl text-base leading-7">
-                  Turn rough voice notes, voicemails, and site walk memos into
-                  daily logs, job briefs, punch lists, action items, and clean
-                  Markdown reports.
+                <p className="max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+                  Upload a recording, record from your phone, or paste rough
+                  site notes. FieldBrief turns messy field updates into daily
+                  reports, punch lists, and job briefs your team can use.
                 </p>
               </div>
-            </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {workflowStats.map((item) => (
-                <div
-                  key={item.label}
-                  className="border-border bg-card rounded-lg border p-4"
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  onClick={() => audioInputRef.current?.click()}
+                  className="h-11 bg-slate-950 px-5 text-white hover:bg-slate-800"
                 >
-                  <div className="text-2xl font-semibold">{item.value}</div>
-                  <div className="text-muted-foreground mt-1 text-xs">
-                    {item.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid gap-3">
-              {Object.values(FIELD_BRIEF_TEMPLATES).map((item) => {
-                const Icon = templateIcons[item.id];
-                const active = item.id === templateId;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => selectTemplate(item.id)}
-                    className={cn(
-                      'border-border bg-card hover:bg-accent/40 flex w-full items-center gap-4 rounded-lg border p-4 text-left transition-colors',
-                      active && 'border-primary bg-primary/5'
-                    )}
-                  >
-                    <span className="bg-muted flex size-11 shrink-0 items-center justify-center rounded-md">
-                      <Icon className="size-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium">
-                        {item.title}
-                      </span>
-                      <span className="text-muted-foreground mt-1 block text-xs">
-                        {item.category} template
-                      </span>
-                    </span>
-                    {active ? (
-                      <CheckCircle2 className="text-primary size-5" />
-                    ) : (
-                      <ArrowRight className="text-muted-foreground size-4" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="border-border bg-card grid min-h-[640px] overflow-hidden rounded-lg border lg:grid-cols-[0.88fr_1.12fr]">
-            <div className="border-border flex flex-col gap-5 border-b p-5 lg:border-r lg:border-b-0">
-              <div>
-                <div className="text-sm font-semibold">{template.title}</div>
-                <div className="text-muted-foreground mt-1 text-xs">
-                  {template.creditCost} credits per report
-                </div>
+                  <UploadCloud className="size-4" />
+                  Upload audio
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSourceText(template.sample)}
+                  className="h-11 border-slate-300 px-5"
+                >
+                  <MessageSquareText className="size-4" />
+                  Try sample
+                </Button>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="grid gap-3">
+                {workflowStats.map((item) => (
+                  <div
+                    key={item.label}
+                    className="grid gap-1 border-l-2 border-slate-200 py-1 pl-4"
+                  >
+                    <div className="text-sm font-semibold text-slate-950">
+                      {item.label}
+                    </div>
+                    <div className="text-sm leading-6 text-slate-600">
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {mode === 'home' && (
+              <div className="grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-3">
+                <div>
+                  <div className="text-2xl font-semibold text-slate-950">
+                    300
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    trial credits for new users
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-semibold text-slate-950">5</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    credits per generated report
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-semibold text-slate-950">3</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    focused field workflows
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            id="workspace"
+            className="grid overflow-hidden rounded-lg border border-slate-200 bg-slate-50 shadow-sm lg:grid-cols-[0.92fr_1.08fr]"
+          >
+            <div className="flex flex-col gap-4 border-b border-slate-200 bg-white p-4 lg:border-r lg:border-b-0">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-slate-950">
+                    Field report builder
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Select a workflow, then add notes or dictation.
+                  </div>
+                </div>
+                <Badge variant="outline" className="border-slate-300">
+                  {template.creditCost} credits
+                </Badge>
+              </div>
+
+              <div className="grid gap-2">
+                {Object.values(FIELD_BRIEF_TEMPLATES).map((item) => {
+                  const Icon = templateIcons[item.id];
+                  const active = item.id === templateId;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectTemplate(item.id)}
+                      className={cn(
+                        'flex min-h-14 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                        active
+                          ? 'border-blue-600 bg-blue-50 text-blue-950'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex size-9 shrink-0 items-center justify-center rounded-md',
+                          active ? 'bg-blue-600 text-white' : 'bg-slate-100'
+                        )}
+                      >
+                        <Icon className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold">
+                          {item.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                          {templateSummaries[item.id].description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
                 {sourceOptions.map((option) => {
                   const Icon = option.icon;
                   const active = sourceType === option.id;
@@ -244,10 +522,10 @@ export function FieldBriefWorkspace({
                       type="button"
                       onClick={() => setSourceType(option.id)}
                       className={cn(
-                        'border-border flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors',
+                        'flex min-h-14 flex-col items-center justify-center gap-1 rounded-md border px-2 text-center text-xs font-medium transition-colors',
                         active
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'hover:bg-accent text-muted-foreground'
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-900'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       )}
                     >
                       <Icon className="size-4" />
@@ -257,32 +535,86 @@ export function FieldBriefWorkspace({
                 })}
               </div>
 
-              <div className="grid gap-3">
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={(event) =>
+                  handleAudioUpload(event.target.files?.[0] || null)
+                }
+              />
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                 <Input
                   value={siteName}
                   onChange={(event) => setSiteName(event.target.value)}
                   placeholder="Site, project, or company"
+                  className="border-slate-200 bg-white"
                 />
                 <Input
                   value={customerName}
                   onChange={(event) => setCustomerName(event.target.value)}
                   placeholder="Customer or prepared-for name"
+                  className="border-slate-200 bg-white"
                 />
+              </div>
+
+              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={isListening ? 'default' : 'outline'}
+                    onClick={toggleVoiceInput}
+                    className="min-w-36 border-slate-300"
+                    disabled={!speechSupported && !isListening}
+                    aria-pressed={isListening}
+                  >
+                    {isListening ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Radio className="size-4" />
+                    )}
+                    {isListening ? 'Stop recording' : 'Record now'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => audioInputRef.current?.click()}
+                    className="border-slate-300"
+                  >
+                    <UploadCloud className="size-4" />
+                    Upload
+                  </Button>
+                </div>
+                <div className="min-h-5 text-xs leading-5 text-slate-500">
+                  {isTranscribing
+                    ? 'Transcribing audio...'
+                    : isListening || interimTranscript
+                      ? interimTranscript || 'Listening...'
+                      : selectedAudioName
+                        ? `Audio selected: ${selectedAudioName}`
+                        : speechSupported
+                          ? 'Record in browser or attach a site audio file.'
+                          : 'Browser recording unavailable; paste a transcript or field note.'}
+                </div>
               </div>
 
               <Textarea
                 value={sourceText}
                 onChange={(event) => setSourceText(event.target.value)}
-                placeholder={template.placeholder}
-                className="min-h-[250px] resize-none"
+                placeholder={`Record, upload, or ${template.placeholder.toLowerCase()}`}
+                className="min-h-[150px] resize-none border-slate-200 bg-white leading-6"
               />
 
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   onClick={generateReport}
-                  disabled={status === 'loading' || !sourceText.trim()}
-                  className="min-w-44"
+                  disabled={
+                    status === 'loading' || isTranscribing || !sourceText.trim()
+                  }
+                  className="min-w-44 bg-blue-600 text-white hover:bg-blue-700"
                 >
                   {status === 'loading' ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -295,6 +627,7 @@ export function FieldBriefWorkspace({
                   type="button"
                   variant="outline"
                   onClick={() => setSourceText(template.sample)}
+                  className="border-slate-300"
                 >
                   Use sample
                 </Button>
@@ -308,12 +641,16 @@ export function FieldBriefWorkspace({
               )}
             </div>
 
-            <div className="flex min-h-[520px] flex-col">
-              <div className="border-border flex items-center justify-between gap-3 border-b p-5">
+            <div className="flex min-h-[520px] flex-col bg-slate-50">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-5">
                 <div>
-                  <div className="text-sm font-semibold">Report Preview</div>
-                  <div className="text-muted-foreground mt-1 text-xs">
-                    Saved to AI Tasks after generation
+                  <div className="text-sm font-semibold text-slate-950">
+                    {report
+                      ? 'Generated Report'
+                      : templateSummaries[templateId].previewTitle}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Structured output for copying, downloading, and saving.
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -325,6 +662,7 @@ export function FieldBriefWorkspace({
                     disabled={!report}
                     aria-label="Copy report"
                     title="Copy report"
+                    className="border-slate-300 bg-white"
                   >
                     <Copy className="size-4" />
                   </Button>
@@ -336,13 +674,14 @@ export function FieldBriefWorkspace({
                     disabled={!report}
                     aria-label="Download report"
                     title="Download report"
+                    className="border-slate-300 bg-white"
                   >
                     <Download className="size-4" />
                   </Button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-auto p-5">
+              <div className="flex-1 overflow-auto p-4 sm:p-5">
                 {report ? (
                   <ReportPreview report={report} />
                 ) : (
@@ -350,8 +689,8 @@ export function FieldBriefWorkspace({
                 )}
               </div>
 
-              <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t p-5">
-                <div className="text-muted-foreground text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white p-4 sm:p-5">
+                <div className="text-xs text-slate-500">
                   {copied
                     ? 'Report copied'
                     : taskId
@@ -361,11 +700,15 @@ export function FieldBriefWorkspace({
                 <div className="flex gap-2">
                   {mode === 'tool' && (
                     <Button asChild variant="ghost">
-                      <Link href="/">Open dashboard</Link>
+                      <Link href={href('/')}>Open homepage</Link>
                     </Button>
                   )}
-                  <Button asChild variant="outline">
-                    <Link href="/activity/ai-tasks?type=text">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-slate-300"
+                  >
+                    <Link href={href('/activity/ai-tasks?type=text')}>
                       View activity
                     </Link>
                   </Button>
@@ -453,18 +796,49 @@ function EmptyReportState({
   templateId: FieldBriefTemplateId;
 }) {
   const Icon = templateIcons[templateId];
+  const preview = templateSummaries[templateId];
   return (
-    <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-4 text-center">
-      <span className="bg-muted flex size-14 items-center justify-center rounded-lg">
-        <Icon className="size-7" />
-      </span>
-      <div>
-        <h2 className="text-lg font-semibold">
-          {FIELD_BRIEF_TEMPLATES[templateId].shortTitle} preview
-        </h2>
-        <p className="text-muted-foreground mt-2 max-w-sm text-sm leading-6">
-          Generated reports appear here with sections, action items, risks, and
-          a downloadable Markdown file.
+    <div className="grid h-full min-h-[420px] content-start gap-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+            <Icon className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">
+              {preview.previewTitle}
+            </h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+              {preview.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 divide-y divide-slate-100 rounded-md border border-slate-200">
+          {preview.previewRows.map((row) => (
+            <div
+              key={row.label}
+              className="grid gap-1 p-3 sm:grid-cols-[9rem_1fr]"
+            >
+              <div className="text-xs font-medium text-slate-500 uppercase">
+                {row.label}
+              </div>
+              <div className="text-sm leading-6 text-slate-800">
+                {row.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+        <div className="flex items-center gap-2 font-semibold">
+          <ShieldCheck className="size-4" />
+          What happens after generation
+        </div>
+        <p>
+          FieldBrief extracts the useful details, organizes them into a formal
+          report, and saves the result to your AI task history.
         </p>
       </div>
     </div>
@@ -472,57 +846,199 @@ function EmptyReportState({
 }
 
 function WorkflowSections() {
-  const useCases = [
+  const locale = useLocale();
+  const href = (path: string) => {
+    if (path === '/') return `/${locale}`;
+    return `/${locale}${path}`;
+  };
+
+  const toolCards = [
     {
-      title: 'Construction',
-      text: 'Daily logs, punch walks, safety notes, owner updates.',
+      id: 'construction-daily-log' as const,
+      title: 'Construction Daily Report',
+      text: 'Convert superintendent notes into completed work, delays, safety notes, and next steps.',
+      cta: 'Create daily report',
       icon: HardHat,
     },
     {
-      title: 'Home service',
-      text: 'Voicemail briefs, dispatch summaries, callback scripts.',
-      icon: Wrench,
+      id: 'punch-list' as const,
+      title: 'Punch List',
+      text: 'Turn walkthrough notes into clear closeout items with area, issue, trade, and priority.',
+      cta: 'Build punch list',
+      icon: ClipboardCheck,
     },
     {
-      title: 'Operations',
-      text: 'Shift handoffs, manager notes, opening and closing checklists.',
-      icon: BriefcaseBusiness,
+      id: 'voicemail-to-job-brief' as const,
+      title: 'Voicemail to Job Brief',
+      text: 'Extract the caller, address, job request, urgency, and dispatch-ready next step.',
+      cta: 'Summarize voicemail',
+      icon: PhoneCall,
+    },
+  ];
+
+  const steps = [
+    {
+      title: 'Capture',
+      text: 'Upload audio, record from the browser, or paste the rough notes already in your phone.',
+      icon: UploadCloud,
+    },
+    {
+      title: 'Structure',
+      text: 'FieldBrief identifies people, locations, completed work, blockers, risks, and actions.',
+      icon: FileText,
+    },
+    {
+      title: 'Share',
+      text: 'Copy, download, or save the finished report to activity history for later review.',
+      icon: CheckCircle2,
     },
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
-          <Badge variant="outline">Workflow first</Badge>
-          <h2 className="mt-4 text-3xl font-semibold tracking-normal">
-            Audio is the input. Finished work is the product.
-          </h2>
-          <p className="text-muted-foreground mt-3 text-sm leading-7">
-            FieldBrief stores each generated report as an AI task, so the
-            existing account, credits, activity, billing, and admin systems keep
-            working while the product moves from generic voice tools to field
-            workflows.
-          </p>
+    <>
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
+            <div>
+              <h2 className="text-3xl font-semibold tracking-normal text-slate-950">
+                Start with the report you need.
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Each tool has a focused landing page and a matching output
+                format. The homepage simply routes users to the right field
+                workflow.
+              </p>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {toolCards.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.id}
+                    href={href(`/tools/${item.id}`)}
+                    className="group flex min-h-64 flex-col justify-between rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-blue-300"
+                  >
+                    <div>
+                      <span className="flex size-11 items-center justify-center rounded-md bg-slate-100 text-slate-800">
+                        <Icon className="size-5" />
+                      </span>
+                      <h3 className="mt-5 text-lg font-semibold text-slate-950">
+                        {item.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {item.text}
+                      </p>
+                    </div>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                      {item.cta}
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          {useCases.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.title}
-                className="border-border bg-card rounded-lg border p-5"
-              >
-                <Icon className="size-5" />
-                <h3 className="mt-4 text-sm font-semibold">{item.title}</h3>
-                <p className="text-muted-foreground mt-2 text-sm leading-6">
-                  {item.text}
+      </section>
+
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-normal text-slate-950">
+              Built for the way field notes actually happen.
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">
+              A superintendent rarely writes perfect prose at the end of the
+              day. FieldBrief is designed around rough notes, quick voice
+              updates, customer voicemails, and walkthrough observations.
+            </p>
+            <div className="mt-8 grid gap-4">
+              {steps.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.title} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <span className="flex size-10 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                        <Icon className="size-5" />
+                      </span>
+                      {index < steps.length - 1 && (
+                        <span className="my-2 h-full min-h-8 w-px bg-slate-200" />
+                      )}
+                    </div>
+                    <div className="pb-5">
+                      <h3 className="text-sm font-semibold text-slate-950">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {item.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-950">
+                  Example output
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Clean enough to send, structured enough to track.
                 </p>
               </div>
-            );
-          })}
+              <Badge variant="outline" className="border-slate-300 bg-white">
+                Markdown
+              </Badge>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <div className="text-xs font-medium text-slate-500 uppercase">
+                  Daily report
+                </div>
+                <h4 className="mt-2 text-xl font-semibold text-slate-950">
+                  Riverside Retail Shell - Field Report
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Crew completed west wall framing and storefront blocking.
+                  Electrical rough-in started in units 101 and 102. Ceiling grid
+                  delivery is delayed until tomorrow.
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                {[
+                  'Completed Work: west wall framing; storefront blocking',
+                  'Delays: ceiling grid delivery moved to tomorrow',
+                  'Safety Notes: no injuries reported',
+                  'Next Steps: finish rough-in; confirm access panel approval',
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-md border border-slate-200 bg-white p-3 text-sm leading-6 text-slate-700"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button asChild className="bg-slate-950 hover:bg-slate-800">
+                  <Link href={href('/tools/construction-daily-log')}>
+                    Try daily report
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="border-slate-300">
+                  <Link href={href('/tools/punch-list')}>Try punch list</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

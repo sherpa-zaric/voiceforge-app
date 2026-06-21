@@ -1,9 +1,13 @@
 import { NextRequest } from 'next/server';
 
 import {
+  buildFieldBriefUserPrompt as _buildUserPrompt,
+  buildFieldBriefSystemPrompt,
   FIELD_BRIEF_TEMPLATES,
+  FieldBriefReport,
+  FieldBriefReportSchema,
   FieldBriefSourceType,
-  generateFieldBriefReport,
+  formatFieldBriefMarkdown,
   isFieldBriefTemplateId,
 } from '@/shared/lib/fieldbrief';
 import { getUuid } from '@/shared/lib/hash';
@@ -66,12 +70,92 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const report = generateFieldBriefReport({
-      templateId,
+    // --- MiMo LLM-powered report generation ---
+    const apiKey = process.env.MIMO_API_KEY;
+    const baseUrl =
+      process.env.MIMO_BASE_URL || 'https://api.xiaomimimo.com/v1';
+
+    if (!apiKey) {
+      return respErr('AI service is not configured. Please contact support.');
+    }
+
+    const systemPrompt = buildFieldBriefSystemPrompt(templateId);
+    const userPrompt = _buildUserPrompt({
       sourceText: trimmedSource,
       sourceType: safeSourceType,
       context,
     });
+
+    const model = process.env.MIMO_REPORT_MODEL || 'mimo-v2.5';
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_completion_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        'MiMo report generation error:',
+        response.status,
+        errorText
+      );
+      return respErr('Report generation failed. Please try again.');
+    }
+
+    const result = await response.json();
+    const rawContent = result?.choices?.[0]?.message?.content || '';
+
+    if (!rawContent.trim()) {
+      return respErr('AI returned an empty response. Please try again.');
+    }
+
+    // Parse LLM output as JSON
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch {
+      // Try extracting JSON from markdown code fences
+      const jsonMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } else {
+        console.error('Failed to parse LLM output:', rawContent.slice(0, 200));
+        return respErr(
+          'AI returned an invalid response format. Please try again.'
+        );
+      }
+    }
+
+    // Validate with zod schema
+    const validated = FieldBriefReportSchema.parse(parsed);
+
+    const report: FieldBriefReport = {
+      templateId,
+      title: template.title,
+      generatedAt: new Date().toISOString(),
+      sourceType: safeSourceType,
+      summary: validated.summary,
+      sections: validated.sections,
+      actions: validated.actions,
+      risks: validated.risks,
+      callbackScript: validated.callbackScript,
+      markdown: '',
+    };
+    report.markdown = formatFieldBriefMarkdown(report);
 
     const taskId = getUuid();
     const task = await createAITask({
@@ -79,8 +163,8 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       userEmail: user.email,
       mediaType: 'text',
-      provider: 'fieldbrief',
-      model: 'fieldbrief-template-v1',
+      provider: 'mimo',
+      model,
       prompt: trimmedSource,
       options: JSON.stringify({
         templateId,

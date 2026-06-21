@@ -3,49 +3,44 @@ import type { MetadataRoute } from 'next';
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || 'https://www.fieldbrief.ai';
+  const url = (path: string) => `${baseUrl}/en${path}`;
 
   return [
     {
-      url: baseUrl,
+      url: url(''),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/tools`,
+      url: url('/tools'),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.95,
     },
     {
-      url: `${baseUrl}/tools/construction-daily-log`,
+      url: url('/tools/construction-daily-log'),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/tools/voicemail-to-job-brief`,
+      url: url('/tools/voicemail-to-job-brief'),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/tools/punch-list`,
+      url: url('/tools/punch-list'),
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.85,
     },
     {
-      url: `${baseUrl}/pricing`,
+      url: url('/pricing'),
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.7,
     },
   ];
 }

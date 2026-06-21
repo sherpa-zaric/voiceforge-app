@@ -35,15 +35,17 @@ export default async function AiTasksPage({
     { title: t('list.crumbs.ai-tasks'), is_active: true },
   ];
 
+  const mediaType = type && type !== 'all' ? type : undefined;
+
   const total = await getAITasksCount({
-    mediaType: type,
+    mediaType,
   });
 
   const aiTasks = await getAITasks({
     getUser: true,
     page,
     limit,
-    mediaType: type,
+    mediaType,
   });
 
   const table: Table = {
@@ -76,37 +78,19 @@ export default async function AiTasksPage({
       title: t('list.tabs.all'),
       name: 'all',
       url: '/admin/ai-tasks',
-      is_active: true,
-    },
-    {
-      title: t('list.tabs.music'),
-      name: 'music',
-      url: '/admin/ai-tasks?type=music',
-      is_active: false,
-    },
-    {
-      title: t('list.tabs.image'),
-      name: 'image',
-      url: '/admin/ai-tasks?type=image',
-      is_active: false,
-    },
-    {
-      title: t('list.tabs.video'),
-      name: 'video',
-      url: '/admin/ai-tasks?type=video',
-      is_active: false,
-    },
-    {
-      title: t('list.tabs.audio'),
-      name: 'audio',
-      url: '/admin/ai-tasks?type=audio',
-      is_active: false,
+      is_active: !type || type === 'all',
     },
     {
       title: t('list.tabs.text'),
       name: 'text',
       url: '/admin/ai-tasks?type=text',
-      is_active: false,
+      is_active: type === 'text',
+    },
+    {
+      title: t('list.tabs.audio'),
+      name: 'audio',
+      url: '/admin/ai-tasks?type=audio',
+      is_active: type === 'audio',
     },
   ];
 

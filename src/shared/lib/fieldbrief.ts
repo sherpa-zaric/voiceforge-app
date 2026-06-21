@@ -1,3 +1,9 @@
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// Templates
+// ---------------------------------------------------------------------------
+
 export const FIELD_BRIEF_TEMPLATES = {
   'construction-daily-log': {
     id: 'construction-daily-log',
@@ -65,347 +71,126 @@ export interface FieldBriefReport {
   markdown: string;
 }
 
-const COMPLETE_KEYWORDS = [
-  'completed',
-  'finished',
-  'installed',
-  'poured',
-  'framed',
-  'started',
-  'delivered',
-  'set',
-  'closed',
-  'approved',
-];
+// ---------------------------------------------------------------------------
+// Zod schema for LLM structured output
+// ---------------------------------------------------------------------------
 
-const DELAY_KEYWORDS = [
-  'delay',
-  'delayed',
-  'waiting',
-  'blocked',
-  'hold',
-  'late',
-  'missing',
-  'backorder',
-  'weather',
-  'access',
-];
+const FieldBriefSectionSchema = z.object({
+  title: z.string().describe('Section heading'),
+  items: z.array(z.string()).min(1).describe('Bullet points in this section'),
+});
 
-const SAFETY_KEYWORDS = [
-  'safety',
-  'injury',
-  'injuries',
-  'hazard',
-  'incident',
-  'unsafe',
-  'water',
-  'electrical',
-  'leak',
-];
-
-const ACTION_KEYWORDS = [
-  'need',
-  'needs',
-  'tomorrow',
-  'follow up',
-  'call',
-  'schedule',
-  'verify',
-  'approve',
-  'approval',
-  'check',
-  'confirm',
-  'send',
-];
-
-const URGENT_KEYWORDS = [
-  'urgent',
-  'emergency',
-  'leak',
-  'water',
-  'no heat',
-  'no power',
-  'safety',
-  'today',
-  'asap',
-];
-
-function cleanText(value: string): string {
-  return value.replace(/\s+/g, ' ').trim();
-}
-
-function splitNotes(input: string): string[] {
-  return input
-    .replace(/\r/g, '\n')
-    .split(/\n+|[.!?;]\s+/)
-    .map(cleanText)
-    .filter(Boolean)
-    .slice(0, 40);
-}
-
-function includesAny(text: string, keywords: string[]): boolean {
-  const lower = text.toLowerCase();
-  return keywords.some((keyword) => lower.includes(keyword));
-}
-
-function pickItems(
-  sentences: string[],
-  keywords: string[],
-  fallbackCount = 3
-): string[] {
-  const matches = sentences.filter((sentence) =>
-    includesAny(sentence, keywords)
-  );
-  const selected =
-    matches.length > 0 ? matches : sentences.slice(0, fallbackCount);
-  return unique(selected).slice(0, 6);
-}
-
-function unique(items: string[]): string[] {
-  return Array.from(new Set(items.map(cleanText))).filter(Boolean);
-}
-
-function getPhoneNumber(input: string): string | null {
-  const match = input.match(
-    /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}/
-  );
-  return match ? match[0] : null;
-}
-
-function getUrgency(sentences: string[]): string {
-  const urgent = sentences.find((sentence) =>
-    includesAny(sentence, URGENT_KEYWORDS)
-  );
-  if (urgent) return `High - ${urgent}`;
-  return 'Normal - no emergency language detected in the source note.';
-}
-
-function getTrade(item: string): string {
-  const lower = item.toLowerCase();
-  if (lower.includes('electric') || lower.includes('outlet'))
-    return 'Electrical';
-  if (
-    lower.includes('plumb') ||
-    lower.includes('sink') ||
-    lower.includes('water')
-  ) {
-    return 'Plumbing';
-  }
-  if (lower.includes('paint')) return 'Painting';
-  if (lower.includes('drywall') || lower.includes('seam')) return 'Drywall';
-  if (lower.includes('tile') || lower.includes('floor')) return 'Flooring';
-  if (lower.includes('label') || lower.includes('inspection'))
-    return 'Closeout';
-  return 'General';
-}
-
-function withFallback(items: string[], fallback: string): string[] {
-  return items.length > 0 ? items : [fallback];
-}
-
-function buildConstructionReport(
-  sentences: string[],
-  context: FieldBriefContext
-): Pick<FieldBriefReport, 'summary' | 'sections' | 'actions' | 'risks'> {
-  const site = context.siteName || 'the site';
-  const completed = pickItems(sentences, COMPLETE_KEYWORDS);
-  const delays = pickItems(sentences, DELAY_KEYWORDS, 2).filter((item) =>
-    includesAny(item, DELAY_KEYWORDS)
-  );
-  const safety = pickItems(sentences, SAFETY_KEYWORDS, 2).filter((item) =>
-    includesAny(item, SAFETY_KEYWORDS)
-  );
-  const next = pickItems(
-    sentences,
-    ['tomorrow', 'next', 'need', 'verify', 'finish'],
-    3
-  );
-  const actions = pickItems(sentences, ACTION_KEYWORDS, 3);
-
-  return {
-    summary: `Daily field report prepared for ${site}. The note was organized into completed work, blockers, safety items, and next steps.`,
-    sections: [
-      {
-        title: 'Completed Work',
-        items: withFallback(
-          completed,
-          'No completed work was clearly identified.'
-        ),
-      },
-      {
-        title: 'Delays and Blockers',
-        items: withFallback(
-          delays,
-          'No delay or blocker was clearly identified.'
-        ),
-      },
-      {
-        title: 'Safety Notes',
-        items: withFallback(safety, 'No safety incident was reported.'),
-      },
-      {
-        title: 'Next Steps',
-        items: withFallback(
-          next,
-          'Confirm tomorrow priorities with the field lead.'
-        ),
-      },
-    ],
-    actions: withFallback(
-      actions,
-      'Review and send the daily log to stakeholders.'
+export const FieldBriefReportSchema = z.object({
+  summary: z.string().describe('A 2-3 sentence summary of the field notes'),
+  sections: z
+    .array(FieldBriefSectionSchema)
+    .min(2)
+    .describe('Structured sections extracted from the notes'),
+  actions: z
+    .array(z.string())
+    .min(1)
+    .describe('Concrete action items or next steps'),
+  risks: z
+    .array(z.string())
+    .describe(
+      'Risks: delays, safety issues, inspection blockers, or cost overruns'
     ),
-    risks: withFallback(
-      delays.concat(safety),
-      'No major risk was detected in the note.'
+  callbackScript: z
+    .string()
+    .optional()
+    .describe(
+      'A short phone script for calling the customer back (voicemail-to-job-brief only)'
     ),
-  };
-}
+});
 
-function buildVoicemailReport(
-  sourceText: string,
-  sentences: string[],
-  context: FieldBriefContext
-): Pick<
-  FieldBriefReport,
-  'summary' | 'sections' | 'actions' | 'risks' | 'callbackScript'
-> {
-  const phone = getPhoneNumber(sourceText);
-  const customer = context.customerName || 'the customer';
-  const urgency = getUrgency(sentences);
-  const needs = pickItems(
-    sentences,
-    ['need', 'leak', 'repair', 'come out', 'call', 'address'],
-    4
-  );
-  const availability = pickItems(
-    sentences,
-    ['today', 'tomorrow', 'after', 'before', 'home'],
-    2
-  );
+export type FieldBriefLLMOutput = z.infer<typeof FieldBriefReportSchema>;
 
-  return {
-    summary: `Job brief prepared from a customer voicemail for ${customer}. Urgency: ${urgency}`,
-    sections: [
-      {
-        title: 'Customer Need',
-        items: withFallback(
-          needs,
-          'Clarify the requested service during callback.'
-        ),
-      },
-      {
-        title: 'Contact and Scheduling',
-        items: withFallback(
-          [phone ? `Callback number: ${phone}` : '', ...availability].filter(
-            Boolean
-          ),
-          'Confirm phone number, address, and available service window.'
-        ),
-      },
-      {
-        title: 'Technician Brief',
-        items: withFallback(
-          needs.map((item) => `${item} (${getTrade(item)})`),
-          'Dispatch technician after confirming scope and access.'
-        ),
-      },
-    ],
-    actions: withFallback(
-      [
-        phone ? `Call ${phone} back.` : 'Call the customer back.',
-        'Confirm address, access, and preferred appointment window.',
-        'Create or update the work order before dispatch.',
-      ],
-      'Call the customer back.'
-    ),
-    risks: withFallback(
-      sentences.filter((sentence) => includesAny(sentence, URGENT_KEYWORDS)),
-      'No urgent risk language was detected.'
-    ),
-    callbackScript: `Hi, this is calling about your service request. I want to confirm the issue, the address, and the best service window before we dispatch a technician.`,
-  };
-}
+// ---------------------------------------------------------------------------
+// Prompt builders
+// ---------------------------------------------------------------------------
 
-function buildPunchListReport(
-  sentences: string[]
-): Pick<FieldBriefReport, 'summary' | 'sections' | 'actions' | 'risks'> {
-  const issues = unique(sentences).slice(0, 12);
-  const formattedIssues = issues.map((item) => {
-    const priority = includesAny(item, SAFETY_KEYWORDS) ? 'High' : 'Normal';
-    return `${priority} priority - ${getTrade(item)} - ${item}`;
-  });
-  const highRisk = formattedIssues.filter((item) => item.startsWith('High'));
+const JSON_INSTRUCTION = `
+IMPORTANT: Return ONLY valid JSON. No markdown, no code fences, no explanations.
+The JSON must match this exact shape:
+{
+  "summary": "string (2-3 sentence summary)",
+  "sections": [{ "title": "string", "items": ["string"] }],
+  "actions": ["string"],
+  "risks": ["string"]
+}`;
 
-  return {
-    summary:
-      'Punch walk notes organized into issue register, responsible trade, and closeout actions.',
-    sections: [
-      {
-        title: 'Issue Register',
-        items: withFallback(
-          formattedIssues,
-          'No punch items were clearly identified.'
-        ),
-      },
-      {
-        title: 'Closeout Checklist',
-        items: [
-          'Assign each issue to the responsible trade.',
-          'Confirm photo evidence after correction.',
-          'Re-walk high priority items before final sign-off.',
-        ],
-      },
-    ],
-    actions: withFallback(
-      issues.map((item) => `Assign ${getTrade(item)}: ${item}`),
-      'Assign punch list items to responsible trades.'
-    ),
-    risks: withFallback(highRisk, 'No high priority punch risk was detected.'),
-  };
-}
+const SYSTEM_PROMPTS: Record<FieldBriefTemplateId, string> = {
+  'construction-daily-log': `You are a construction project reporting assistant. Parse the user's rough field notes into a structured daily report.
 
-export function generateFieldBriefReport({
-  templateId,
-  sourceText,
-  sourceType,
-  context = {},
-}: {
-  templateId: FieldBriefTemplateId;
+Rules:
+- Extract completed work, delays/blockers, safety notes, and next steps.
+- Be specific: use actual names, locations, trade names, and quantities from the notes.
+- Do not invent information that isn't in the source notes.
+- Keep items concise (one sentence each).
+- "actions" should be concrete next steps someone can act on.
+- "risks" should flag anything that could cause delay, safety issues, or cost overruns.
+- Do NOT include a "callbackScript" field.
+${JSON_INSTRUCTION}`,
+
+  'voicemail-to-job-brief': `You are a dispatch coordinator assistant. Parse the user's voicemail transcript or customer message into a dispatch-ready job brief.
+
+Rules:
+- Identify: caller name, phone number, address, service request, urgency, and availability window.
+- "sections" should include: Customer Need, Contact and Scheduling, Technician Brief.
+- "risks" should flag urgent or time-sensitive issues.
+- Do not invent details not present in the source.
+${JSON_INSTRUCTION.replace('"risks": ["string"]', '"risks": ["string"], "callbackScript": "string"')}
+The "callbackScript" field must be a short, natural script a dispatcher can read when calling the customer back.`,
+
+  'punch-list': `You are a construction closeout assistant. Parse the user's punch walk or inspection notes into a punch list.
+
+Rules:
+- Each issue should be assigned a priority (High for safety/inspection blockers, Normal otherwise) and the responsible trade (Electrical, Plumbing, Painting, Drywall, Flooring, HVAC, General, etc.).
+- Format items in "Issue Register" as: "Priority - Trade - Description".
+- Include a "Closeout Checklist" section with standard closeout steps.
+- "actions" should assign each issue to the responsible trade.
+- "risks" should flag high-priority or inspection-blocking items.
+- Do not invent issues not mentioned in the source.
+${JSON_INSTRUCTION}`,
+};
+
+function buildFieldBriefUserPrompt(args: {
   sourceText: string;
   sourceType: FieldBriefSourceType;
   context?: FieldBriefContext;
-}): FieldBriefReport {
-  const template = FIELD_BRIEF_TEMPLATES[templateId];
-  const cleanedSource = cleanText(sourceText);
-  const sentences = splitNotes(cleanedSource);
+}): string {
+  const parts: string[] = [];
 
-  const partial: Pick<
-    FieldBriefReport,
-    'summary' | 'sections' | 'actions' | 'risks' | 'callbackScript'
-  > =
-    templateId === 'construction-daily-log'
-      ? buildConstructionReport(sentences, context)
-      : templateId === 'voicemail-to-job-brief'
-        ? buildVoicemailReport(cleanedSource, sentences, context)
-        : buildPunchListReport(sentences);
+  if (args.context?.siteName) {
+    parts.push(`Site/Project: ${args.context.siteName}`);
+  }
+  if (args.context?.customerName) {
+    parts.push(`Customer: ${args.context.customerName}`);
+  }
+  if (args.context?.preparedFor) {
+    parts.push(`Prepared for: ${args.context.preparedFor}`);
+  }
 
-  const report: FieldBriefReport = {
-    templateId,
-    title: template.title,
-    generatedAt: new Date().toISOString(),
-    sourceType,
-    summary: partial.summary,
-    sections: partial.sections,
-    actions: partial.actions,
-    risks: partial.risks,
-    callbackScript: partial.callbackScript,
-    markdown: '',
-  };
+  parts.push(`Source type: ${args.sourceType}`);
+  parts.push('');
+  parts.push('---');
+  parts.push('');
+  parts.push(args.sourceText);
 
-  report.markdown = formatFieldBriefMarkdown(report);
-  return report;
+  return parts.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export function buildFieldBriefSystemPrompt(
+  templateId: FieldBriefTemplateId
+): string {
+  return SYSTEM_PROMPTS[templateId];
+}
+
+export { buildFieldBriefUserPrompt };
 
 export function formatFieldBriefMarkdown(report: FieldBriefReport): string {
   const lines = [

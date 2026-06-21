@@ -38,10 +38,6 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = routing.defaultLocale;
   }
 
-  if (['zh-CN'].includes(locale)) {
-    locale = 'zh';
-  }
-
   try {
     // load all local messages
     const allMessages = await Promise.all(

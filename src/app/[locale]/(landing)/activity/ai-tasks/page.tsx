@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { AudioPlayer, Empty } from '@/shared/blocks/common';
+import { Empty } from '@/shared/blocks/common';
 import { AITask, getAITasks, getAITasksCount } from '@/shared/models/ai_task';
 import { getUserInfo } from '@/shared/models/user';
 
@@ -112,85 +112,22 @@ function TaskCard({ task }: { task: AITask }) {
         </div>
       )}
 
+      {/* Audio transcription results */}
+      {task.mediaType === 'audio' && taskResult?.text && (
+        <div className="border-border bg-muted/30 mb-3 rounded-md border p-3">
+          <p className="text-foreground text-sm font-medium">Transcription</p>
+          <p className="text-muted-foreground mt-2 line-clamp-4 text-xs leading-5">
+            {taskResult.text}
+          </p>
+        </div>
+      )}
+
       {/* Error message for failed tasks */}
       {task.status === 'failed' && task.taskInfo && (
         <div className="mb-3 rounded-md bg-red-50 p-3">
           <p className="text-xs text-red-600">
             {safeJsonParse(task.taskInfo)?.errorMessage || 'Generation failed'}
           </p>
-        </div>
-      )}
-
-      {/* Images for image tasks */}
-      {task.mediaType === 'image' && task.taskInfo && (
-        <div className="mb-3">
-          {(() => {
-            const taskInfo = safeJsonParse(task.taskInfo);
-            if (taskInfo.images && taskInfo.images.length > 0) {
-              return (
-                <div className="flex gap-2 overflow-x-auto">
-                  {taskInfo.images.map((image: any, index: number) => (
-                    <img
-                      key={index}
-                      src={image.imageUrl}
-                      alt="Generated image"
-                      className="h-24 w-auto flex-shrink-0 rounded"
-                    />
-                  ))}
-                </div>
-              );
-            }
-            return null;
-          })()}
-        </div>
-      )}
-
-      {/* Music for audio tasks */}
-      {task.mediaType === 'music' && task.taskInfo && (
-        <div className="mb-3">
-          {(() => {
-            const taskInfo = safeJsonParse(task.taskInfo);
-            if (taskInfo.songs && taskInfo.songs.length > 0) {
-              return (
-                <div className="space-y-2">
-                  {taskInfo.songs
-                    .filter((s: any) => s.audioUrl)
-                    .map((song: any) => (
-                      <div key={song.id}>
-                        <AudioPlayer
-                          src={song.audioUrl}
-                          title={song.title}
-                          className="w-full"
-                        />
-                        <a
-                          href={song.audioUrl}
-                          download={`${song.title || 'audio'}.mp3`}
-                          className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1.5 text-xs transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                          Download
-                        </a>
-                      </div>
-                    ))}
-                </div>
-              );
-            }
-            return null;
-          })()}
         </div>
       )}
 
@@ -224,16 +161,18 @@ export default async function AiTasksPage({
 
   const t = await getTranslations('activity.ai-tasks');
 
+  const mediaType = type && type !== 'all' ? type : undefined;
+
   const aiTasks = await getAITasks({
     userId: user.id,
-    mediaType: type,
+    mediaType,
     page,
     limit,
   });
 
   const total = await getAITasksCount({
     userId: user.id,
-    mediaType: type,
+    mediaType,
   });
 
   const tabs = [
@@ -244,34 +183,16 @@ export default async function AiTasksPage({
       is_active: !type || type === 'all',
     },
     {
-      name: 'music',
-      title: 'Music',
-      url: '/activity/ai-tasks?type=music',
-      is_active: type === 'music',
-    },
-    {
-      name: 'image',
-      title: 'Image',
-      url: '/activity/ai-tasks?type=image',
-      is_active: type === 'image',
-    },
-    {
-      name: 'video',
-      title: 'Video',
-      url: '/activity/ai-tasks?type=video',
-      is_active: type === 'video',
+      name: 'text',
+      title: 'Reports',
+      url: '/activity/ai-tasks?type=text',
+      is_active: type === 'text',
     },
     {
       name: 'audio',
       title: 'Audio',
       url: '/activity/ai-tasks?type=audio',
       is_active: type === 'audio',
-    },
-    {
-      name: 'text',
-      title: 'Text',
-      url: '/activity/ai-tasks?type=text',
-      is_active: type === 'text',
     },
   ];
 
@@ -321,7 +242,7 @@ export default async function AiTasksPage({
           <div className="mt-8 flex items-center justify-center gap-2">
             {page > 1 && (
               <a
-                href={`/activity/ai-tasks?type=${type || 'all'}&page=${page - 1}`}
+                href={mediaType ? `/activity/ai-tasks?type=${mediaType}&page=${page - 1}` : `/activity/ai-tasks?page=${page - 1}`}
                 className="bg-card border-border text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm"
               >
                 Previous
@@ -332,7 +253,7 @@ export default async function AiTasksPage({
             </span>
             {page < Math.ceil(total / limit) && (
               <a
-                href={`/activity/ai-tasks?type=${type || 'all'}&page=${page + 1}`}
+                href={mediaType ? `/activity/ai-tasks?type=${mediaType}&page=${page + 1}` : `/activity/ai-tasks?page=${page + 1}`}
                 className="bg-card border-border text-foreground hover:bg-accent rounded-lg border px-4 py-2 text-sm"
               >
                 Next
